@@ -25,11 +25,10 @@ The included subscription-scope ARM template deploys:
 	- [Azure CLI](#azure-cli)
 	- [Azure PowerShell](#azure-powershell)
 - [Post-deployment](#post-deployment)
-	- [1. Enable Machine Configuration prerequisites](#1-enable-machine-configuration-prerequisites)
-	- [2. Assign the custom policy](#2-assign-the-custom-policy)
-	- [3. Associate the DCR with machines](#3-associate-the-dcr-with-machines)
-	- [4. Verify the workbook](#4-verify-the-workbook)
-	- [5. Verify policy compliance](#5-verify-policy-compliance)
+	- [1. Assign required policies and initiatives](#1-assign-required-policies-and-initiatives)
+	- [2. Configure the custom policy assignment](#2-configure-the-custom-policy-assignment)
+	- [3. Verify the workbook](#3-verify-the-workbook)
+	- [4. Verify policy compliance](#4-verify-policy-compliance)
 - [Package availability and updates](#package-availability-and-updates)
 - [Package authoring prerequisites](#package-authoring-prerequisites)
 - [Build and publish](#build-and-publish)
@@ -95,15 +94,35 @@ pwsh ./Build-DeploymentTemplate.ps1
 
 ## Post-deployment
 
-### 1. Enable Machine Configuration prerequisites
+### 1. Assign required policies and initiatives
 
-Assign the built-in initiative **Deploy prerequisites to enable Guest Configuration policies on virtual machines** at the management group, subscription, or resource-group scope containing the target Azure VMs. It enables the system-assigned managed identity and Machine Configuration extension required by the custom policy.
+The template creates the custom policy definition and DCR, but it doesn't create policy assignments or associate the DCR with machines. Assign the applicable definitions at the management group, subscription, or resource-group scope containing the target machines.
 
-Arc-enabled servers include Machine Configuration in the Connected Machine agent. Include Arc machines in the custom policy assignment only after reviewing the applicable Azure Arc charges.
+| Policy or initiative | Requirement | Why it is needed |
+| --- | --- | --- |
+| **Configure Microsoft Defender for Endpoint mode on Windows machines** | Required | Assigns the custom Machine Configuration package that audits or configures `ForceDefenderPassiveMode`. This definition is deployed by this template. |
+| **Deploy prerequisites to enable Guest Configuration policies on virtual machines** | Required for Azure VMs and VM scale sets | Enables the system-assigned managed identity and Machine Configuration extension used to download, evaluate, and remediate the custom package. Arc-enabled servers receive Machine Configuration through the Connected Machine agent. |
+| **Enable ChangeTracking and Inventory for virtual machines** | Required when monitoring Azure VMs | Associates the deployed DCR and enables Change Tracking at scale. The initiative includes **Assign Built-In User-Assigned Managed Identity to Virtual Machines**, **Configure ChangeTracking extension for Windows virtual machines**, and **Configure ChangeTracking extension for Linux virtual machines**. |
+| **Enable ChangeTracking and Inventory for Arc-enabled virtual machines** | Required when monitoring Arc-enabled servers | Associates the DCR and configures Change Tracking for Azure Arc-enabled machines. Use this together with `IncludeArcMachines = true` when Arc servers are also governed by the custom policy. |
+| **Enable ChangeTracking and Inventory for virtual machine scale sets** | Required when monitoring VM scale sets | Associates the DCR and configures Change Tracking for supported virtual machine scale sets. |
 
-### 2. Assign the custom policy
+For each applicable Change Tracking initiative, provide the resource ID of the DCR created by this template. The deployment returns it as the `dataCollectionRuleResourceId` output. You can also retrieve it with:
 
-The template creates the policy definition but doesn't assign it. In **Azure Policy > Definitions**, locate **Configure Microsoft Defender for Endpoint mode on Windows machines**, select **Assign**, and configure:
+```powershell
+az monitor data-collection rule show `
+	--resource-group '<resource-group-name>' `
+	--name 'DefenderPassiveMode-ChangeTracking-dcr' `
+	--query id `
+	--output tsv
+```
+
+Select **Create a remediation task** when assigning each deploy-if-not-exists initiative so existing machines receive the required identity, extensions, and DCR association. Machines added later are evaluated automatically.
+
+For the current Microsoft procedure and initiative selection by machine type, see [Enable Change Tracking and Inventory at scale by using Azure Policy](https://learn.microsoft.com/azure/azure-change-tracking-inventory/enable-change-tracking-at-scale-policy).
+
+### 2. Configure the custom policy assignment
+
+In **Azure Policy > Definitions**, locate **Configure Microsoft Defender for Endpoint mode on Windows machines**, select **Assign**, and configure:
 
 - `DefenderMode`: `Active` writes DWORD `0`; `Passive` writes DWORD `1`.
 - `IncludeArcMachines`: include supported Arc-connected Windows machines when required.
@@ -112,13 +131,11 @@ The template creates the policy definition but doesn't assign it. In **Azure Pol
 
 Create a remediation task during assignment for existing machines. The policy assignment needs a managed identity and the role shown by the portal for the `DeployIfNotExists` effect. New or updated machines are evaluated automatically; existing machines require the remediation task to receive the guest assignment promptly.
 
-### 3. Associate the DCR with machines
-
-Deploying the DCR alone doesn't connect it to machines. Create a data collection rule association for each target Azure VM or Arc-enabled server, or use Azure Policy to create those associations at scale.
-
 Target machines must have Azure Monitor Agent and the Change Tracking and Inventory extension/configuration required for AMA-based Change Tracking. Confirm that `ConfigurationChange` records reach the selected Log Analytics workspace before relying on the workbook.
 
-### 4. Verify the workbook
+Arc-enabled servers include Machine Configuration in the Connected Machine agent. Include Arc machines in the custom policy assignment only after reviewing the applicable Azure Arc charges.
+
+### 3. Verify the workbook
 
 Open **Azure Monitor > Workbooks > Defender for Endpoint Passive Mode Monitor**. The deployed workspace is selected by default. Verify that:
 
@@ -126,7 +143,7 @@ Open **Azure Monitor > Workbooks > Defender for Endpoint Passive Mode Monitor**.
 - `ConfigurationChange` contains records where `ValueName == "ForceDefenderPassiveMode"`.
 - Current mode and change-history visuals return data after Change Tracking completes its first collection cycle.
 
-### 5. Verify policy compliance
+### 4. Verify policy compliance
 
 Open **Azure Policy > Compliance**, select the policy assignment, and review per-resource Machine Configuration details. Initial assignment, package download, and guest evaluation aren't immediate; allow at least one Machine Configuration evaluation cycle before troubleshooting a pending result.
 
