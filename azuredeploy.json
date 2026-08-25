@@ -1060,19 +1060,5 @@
         }
       }
     }
-  ],
-  "outputs": {
-    "policyDefinitionResourceId": {
-      "type": "string",
-      "value": "[variables('policyDefinitionId')]"
-    },
-    "dataCollectionRuleResourceId": {
-      "type": "string",
-      "value": "[resourceId(subscription().subscriptionId, parameters('resourceGroupName'), 'Microsoft.Insights/dataCollectionRules', parameters('dataCollectionRuleName'))]"
-    },
-    "workbookResourceId": {
-      "type": "string",
-      "value": "[resourceId(subscription().subscriptionId, parameters('resourceGroupName'), 'Microsoft.Insights/workbooks', parameters('workbookName'))]"
-    }
-  }
+  ]
 }

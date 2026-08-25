@@ -224,20 +224,6 @@ $template = [ordered] @{
             }
         }
     )
-    outputs = [ordered] @{
-        policyDefinitionResourceId = [ordered] @{
-            type = 'string'
-            value = "[variables('policyDefinitionId')]"
-        }
-        dataCollectionRuleResourceId = [ordered] @{
-            type = 'string'
-            value = "[resourceId(subscription().subscriptionId, parameters('resourceGroupName'), 'Microsoft.Insights/dataCollectionRules', parameters('dataCollectionRuleName'))]"
-        }
-        workbookResourceId = [ordered] @{
-            type = 'string'
-            value = "[resourceId(subscription().subscriptionId, parameters('resourceGroupName'), 'Microsoft.Insights/workbooks', parameters('workbookName'))]"
-        }
-    }
 }
 
 $template | ConvertTo-Json -Depth 100 | Set-Content -Path $OutputPath -Encoding utf8

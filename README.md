@@ -106,7 +106,7 @@ The template creates the custom policy definition and DCR, but it doesn't create
 | **Enable ChangeTracking and Inventory for Arc-enabled virtual machines** | Required to Track Registry Changes Overtime in more detail | Associates the DCR and configures Change Tracking for Azure Arc-enabled machines. Use this together with `IncludeArcMachines = true` when Arc servers are also governed by the custom policy. |
 | **Enable ChangeTracking and Inventory for virtual machine scale sets** | Required to Track Registry Changes Overtime in more detail | Associates the DCR and configures Change Tracking for supported virtual machine scale sets. |
 
-For each applicable Change Tracking initiative, provide the resource ID of the DCR created by this template. The deployment returns it as the `dataCollectionRuleResourceId` output. You can also retrieve it with:
+For each applicable Change Tracking initiative, provide the resource ID of the DCR created by this template. Retrieve it with:
 
 ```powershell
 az monitor data-collection rule show `
