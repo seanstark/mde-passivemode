@@ -49,6 +49,14 @@ $dcrTemplate = Get-Content -Raw (Join-Path $PSScriptRoot 'dcr_ChangeTracking.jso
 $policyParameters = ConvertTo-ArmLiteral -Value $policy.parameters
 $policyMetadata = ConvertTo-ArmLiteral -Value $policy.metadata
 $policyRule = ConvertTo-ArmLiteral -Value $policy.policyRule
+$roleDefinitionIds = @($policy.policyRule.then.details.roleDefinitionIds)
+if ($roleDefinitionIds.Count -eq 0) {
+    throw "The policy doesn't contain any roleDefinitionIds."
+}
+
+$escapedRoleDefinitionIds = $roleDefinitionIds |
+    ForEach-Object { "'$($_ -replace "'", "''")'" }
+$policyRule.then.details.roleDefinitionIds = "[createArray($($escapedRoleDefinitionIds -join ', '))]"
 $workspaceParameter = $workbook.items |
     Where-Object { $_.type -eq 9 } |
     ForEach-Object { $_.content.parameters } |
@@ -223,11 +231,11 @@ $template = [ordered] @{
         }
         dataCollectionRuleResourceId = [ordered] @{
             type = 'string'
-            value = "[resourceId(parameters('resourceGroupName'), 'Microsoft.Insights/dataCollectionRules', parameters('dataCollectionRuleName'))]"
+            value = "[resourceId(subscription().subscriptionId, parameters('resourceGroupName'), 'Microsoft.Insights/dataCollectionRules', parameters('dataCollectionRuleName'))]"
         }
         workbookResourceId = [ordered] @{
             type = 'string'
-            value = "[resourceId(parameters('resourceGroupName'), 'Microsoft.Insights/workbooks', parameters('workbookName'))]"
+            value = "[resourceId(subscription().subscriptionId, parameters('resourceGroupName'), 'Microsoft.Insights/workbooks', parameters('workbookName'))]"
         }
     }
 }

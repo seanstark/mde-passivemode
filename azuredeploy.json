@@ -363,9 +363,7 @@
           "then": {
             "effect": "deployIfNotExists",
             "details": {
-              "roleDefinitionIds": [
-                "/providers/Microsoft.Authorization/roleDefinitions/088ab73d-1256-47ae-bea9-9de8e7131f31"
-              ],
+              "roleDefinitionIds": "[createArray('/providers/Microsoft.Authorization/roleDefinitions/088ab73d-1256-47ae-bea9-9de8e7131f31')]",
               "type": "Microsoft.GuestConfiguration/guestConfigurationAssignments",
               "name": "[[concat('MdeDefenderModeConfig$pid', uniqueString(policy().assignmentId, policy().definitionReferenceId))]",
               "existenceCondition": {
@@ -1070,11 +1068,11 @@
     },
     "dataCollectionRuleResourceId": {
       "type": "string",
-      "value": "[resourceId(parameters('resourceGroupName'), 'Microsoft.Insights/dataCollectionRules', parameters('dataCollectionRuleName'))]"
+      "value": "[resourceId(subscription().subscriptionId, parameters('resourceGroupName'), 'Microsoft.Insights/dataCollectionRules', parameters('dataCollectionRuleName'))]"
     },
     "workbookResourceId": {
       "type": "string",
-      "value": "[resourceId(parameters('resourceGroupName'), 'Microsoft.Insights/workbooks', parameters('workbookName'))]"
+      "value": "[resourceId(subscription().subscriptionId, parameters('resourceGroupName'), 'Microsoft.Insights/workbooks', parameters('workbookName'))]"
     }
   }
 }
