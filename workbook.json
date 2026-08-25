@@ -1,0 +1,378 @@
+{
+  "version": "Notebook/1.0",
+  "items": [
+    {
+      "type": 1,
+      "content": {
+        "json": "#  Defender for Endpoint Passive Mode Monitor\nTrack changes over time and inspect the latest observed `ForceDefenderPassiveMode` registry value. Data source: `ConfigurationChange`."
+      },
+      "name": "title"
+    },
+    {
+      "type": 9,
+      "content": {
+        "version": "KqlParameterItem/1.0",
+        "parameters": [
+          {
+            "id": "8a7694d3-c308-4b44-b748-b650f29f0c5d",
+            "version": "KqlParameterItem/1.0",
+            "name": "Workspace",
+            "type": 5,
+            "isRequired": true,
+            "query": "resources\n| where type == \"microsoft.operationalinsights/workspaces\"\n| project id",
+            "crossComponentResources": [
+              "value::all"
+            ],
+            "typeSettings": {
+              "additionalResourceOptions": [],
+              "showDefault": false
+            },
+            "queryType": 1,
+            "resourceType": "microsoft.resourcegraph/resources",
+            "label": "Log Analytics workspace",
+            "value": "/subscriptions/9ebcb583-7adb-44ea-b688-06f1de624cc1/resourceGroups/sentinel-prd/providers/Microsoft.OperationalInsights/workspaces/sentinel-prd"
+          },
+          {
+            "id": "f8268d55-54eb-4d95-acdf-73f79fb0cd63",
+            "version": "KqlParameterItem/1.0",
+            "name": "TimeRange",
+            "type": 4,
+            "isRequired": true,
+            "value": {
+              "durationMs": 2592000000
+            },
+            "typeSettings": {
+              "selectableValues": [
+                {
+                  "durationMs": 86400000
+                },
+                {
+                  "durationMs": 604800000
+                },
+                {
+                  "durationMs": 2592000000
+                },
+                {
+                  "durationMs": 7776000000
+                }
+              ],
+              "allowCustom": true
+            },
+            "label": "Time range"
+          },
+          {
+            "id": "2809123a-4f69-4029-9fa7-190693074446",
+            "version": "KqlParameterItem/1.0",
+            "name": "ComputerFilter",
+            "type": 2,
+            "isRequired": true,
+            "multiSelect": true,
+            "quote": "'",
+            "delimiter": ",",
+            "value": [
+              "value::all"
+            ],
+            "query": "ConfigurationChange\n| where isnotempty(Computer)\n| summarize by Computer\n| order by Computer asc\n| project value = Computer, label = Computer, selected = false",
+            "crossComponentResources": [
+              "{Workspace}"
+            ],
+            "typeSettings": {
+              "additionalResourceOptions": [
+                "value::all"
+              ],
+              "selectAllValue": "*",
+              "showDefault": false
+            },
+            "timeContextFromParameter": "TimeRange",
+            "queryType": 0,
+            "resourceType": "microsoft.operationalinsights/workspaces",
+            "label": "Computers"
+          }
+        ],
+        "style": "pills",
+        "queryType": 0,
+        "resourceType": "microsoft.operationalinsights/workspaces"
+      },
+      "name": "parameters"
+    },
+    {
+      "type": 1,
+      "content": {
+        "json": "## Overview"
+      },
+      "name": "overview-heading"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "let ComputerInventory = materialize(\n    ConfigurationChange\n    | where isnotempty(Computer)\n    | where \"*\" in ({ComputerFilter}) or Computer in ({ComputerFilter})\n    | summarize LastComputerSeen = max(TimeGenerated) by Computer\n);\nlet LatestSetting = materialize(\n    ConfigurationChange\n    | where ValueName == \"ForceDefenderPassiveMode\"\n    | where \"*\" in ({ComputerFilter}) or Computer in ({ComputerFilter})\n    | summarize arg_max(TimeGenerated, *) by Computer\n    | extend ModeFilter = iff(ChangeCategory !~ \"Removed\" and trim(\" \", tostring(ValueData)) == \"1\", \"Passive\", \"Active\")\n    | project Computer, ModeFilter\n);\nlet Counts = ComputerInventory\n    | join kind=leftouter LatestSetting on Computer\n    | extend ModeFilter = coalesce(ModeFilter, \"Active\")\n    | summarize Computers = dcount(Computer) by ModeFilter;\ndatatable(ModeFilter:string, Mode:string, SortOrder:int) [\n    \"Passive\", \"Passive Mode\", 1,\n    \"Active\", \"Active Mode\", 2\n]\n| join kind=leftouter Counts on ModeFilter\n| extend Computers = coalesce(Computers, 0)\n| order by SortOrder asc\n| project Mode, Computers, ModeFilter",
+        "size": 4,
+        "showAnalytics": true,
+        "title": "Current Defender mode by computer",
+        "timeContextFromParameter": "TimeRange",
+        "showRefreshButton": true,
+        "exportFieldName": "ModeFilter",
+        "exportParameterName": "DefenderModeFilter",
+        "exportDefaultValue": "*",
+        "showExportToExcel": true,
+        "queryType": 0,
+        "resourceType": "microsoft.operationalinsights/workspaces",
+        "crossComponentResources": [
+          "{Workspace}"
+        ],
+        "visualization": "tiles",
+        "tileSettings": {
+          "titleContent": {
+            "columnMatch": "Mode",
+            "formatter": 1
+          },
+          "leftContent": {
+            "columnMatch": "Computers",
+            "formatter": 12,
+            "formatOptions": {
+              "palette": "auto"
+            }
+          },
+          "showBorder": true
+        }
+      },
+      "customWidth": "40",
+      "name": "defender-mode-tiles"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "let Events = materialize(\n    ConfigurationChange\n    | where ConfigChangeType =~ \"Registry\"\n    | where ChangeCategory in~ (\"Added\", \"Modified\", \"Removed\")\n    | where ValueName == \"ForceDefenderPassiveMode\"\n    | where \"*\" in ({ComputerFilter}) or Computer in ({ComputerFilter})\n);\nlet Counts = union\n    (Events | summarize Value = count() | extend ActivityFilter = \"*\"),\n    (Events | summarize Value = count() by ActivityFilter = ChangeCategory);\ndatatable(Metric:string, ActivityFilter:string, SortOrder:int) [\n    \"All Changes\", \"*\", 1,\n    \"Added\", \"Added\", 2,\n    \"Modified\", \"Modified\", 3,\n    \"Removed\", \"Removed\", 4\n]\n| join kind=leftouter Counts on ActivityFilter\n| extend Value = coalesce(Value, 0)\n| order by SortOrder asc\n| project Metric, Value, ActivityFilter",
+        "size": 4,
+        "showAnalytics": true,
+        "title": "Registry activity",
+        "timeContextFromParameter": "TimeRange",
+        "showRefreshButton": true,
+        "exportFieldName": "ActivityFilter",
+        "exportParameterName": "RegistryActivityFilter",
+        "exportDefaultValue": "*",
+        "showExportToExcel": true,
+        "queryType": 0,
+        "resourceType": "microsoft.operationalinsights/workspaces",
+        "crossComponentResources": [
+          "{Workspace}"
+        ],
+        "visualization": "tiles",
+        "tileSettings": {
+          "titleContent": {
+            "columnMatch": "Metric",
+            "formatter": 1
+          },
+          "leftContent": {
+            "columnMatch": "Value",
+            "formatter": 12,
+            "formatOptions": {
+              "palette": "auto"
+            }
+          },
+          "showBorder": false
+        }
+      },
+      "customWidth": "60",
+      "name": "activity-tiles"
+    },
+    {
+      "type": 1,
+      "content": {
+        "json": "## Current Values\nLatest observed record in the selected time range for each computer, registry key, and value name. Removed values are shown as `<removed>`."
+      },
+      "name": "current-heading"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "let ComputerInventory = materialize(\n    ConfigurationChange\n    | where isnotempty(Computer)\n    | where \"*\" in ({ComputerFilter}) or Computer in ({ComputerFilter})\n    | extend JoinVMUUID = tostring(VMUUID)\n    | where isnotempty(JoinVMUUID)\n    | summarize arg_max(TimeGenerated, _ResourceId, Computer) by JoinVMUUID\n    | project JoinVMUUID, ConfigComputer = Computer, InventoryObserved = TimeGenerated, InventoryResourceId = _ResourceId\n);\nlet LatestSetting = materialize(\n    ConfigurationChange\n    | where ValueName == \"ForceDefenderPassiveMode\"\n    | where \"*\" in ({ComputerFilter}) or Computer in ({ComputerFilter})\n    | extend JoinVMUUID = tostring(VMUUID)\n    | where isnotempty(JoinVMUUID)\n    | summarize arg_max(TimeGenerated, *) by JoinVMUUID\n    | project JoinVMUUID, SettingObserved = TimeGenerated, SettingResourceId = _ResourceId, ValueData, ValueName, ValueType, ChangeCategory\n);\nlet LatestHeartbeat = materialize(\n    Heartbeat\n    | extend JoinVMUUID = tostring(VMUUID)\n    | where isnotempty(JoinVMUUID)\n    | summarize arg_max(TimeGenerated, OSName, Computer, ComputerPrivateIPs) by JoinVMUUID\n    | project JoinVMUUID, HeartbeatComputer = Computer, OSName, ComputerPrivateIPs = tostring(ComputerPrivateIPs)\n);\nComputerInventory\n| join kind=leftouter LatestSetting on JoinVMUUID\n| extend LastObserved = coalesce(SettingObserved, InventoryObserved),\n         Resource = coalesce(SettingResourceId, InventoryResourceId),\n         ValueName = coalesce(ValueName, \"ForceDefenderPassiveMode\"),\n         State = case(isnull(SettingObserved), \"Does not exist\", ChangeCategory =~ \"Removed\", \"Does not exist\", \"Present\"),\n         CurrentValue = case(isnull(SettingObserved) or ChangeCategory =~ \"Removed\", \"<does not exist>\", isempty(tostring(ValueData)), \"<empty>\", tostring(ValueData)),\n         LastAction = case(isnull(SettingObserved), \"Not observed\", isempty(ChangeCategory), \"Snapshot\", ChangeCategory)\n| extend ModeFilter = iff(State == \"Present\" and trim(\" \", CurrentValue) == \"1\", \"Passive\", \"Active\")\n| where \"{RegistryActivityFilter}\" == \"*\" or LastAction == \"{RegistryActivityFilter}\"\n| where \"{DefenderModeFilter}\" == \"*\" or ModeFilter == \"{DefenderModeFilter}\"\n| join kind=leftouter LatestHeartbeat on JoinVMUUID\n| extend Computer = coalesce(HeartbeatComputer, ConfigComputer)\n| project LastObserved, Resource, ValueName, CurrentValue, State, LastAction, OSName, ['Computer Name'] = Computer, ComputerPrivateIPs\n| order by LastObserved desc",
+        "size": 0,
+        "showAnalytics": true,
+        "title": "Latest observed registry values",
+        "timeContextFromParameter": "TimeRange",
+        "showRefreshButton": true,
+        "exportFieldName": "Resource",
+        "exportParameterName": "SelectedResource",
+        "exportDefaultValue": "*",
+        "showExportToExcel": true,
+        "queryType": 0,
+        "resourceType": "microsoft.operationalinsights/workspaces",
+        "crossComponentResources": [
+          "{Workspace}"
+        ],
+        "visualization": "table",
+        "gridSettings": {
+          "formatters": [
+            {
+              "columnMatch": "Resource",
+              "formatter": 13,
+              "formatOptions": {
+                "linkTarget": "Resource",
+                "linkIsContextBlade": true,
+                "showIcon": true
+              }
+            }
+          ],
+          "filter": true,
+          "sortBy": [
+            {
+              "itemKey": "LastObserved",
+              "sortOrder": 2
+            }
+          ],
+          "labelSettings": [
+            {
+              "columnId": "LastObserved",
+              "label": "Last observed"
+            },
+            {
+              "columnId": "CurrentValue",
+              "label": "Current value"
+            },
+            {
+              "columnId": "LastAction",
+              "label": "Last action"
+            }
+          ]
+        },
+        "sortBy": [
+          {
+            "itemKey": "LastObserved",
+            "sortOrder": 2
+          }
+        ]
+      },
+      "name": "current-values"
+    },
+    {
+      "type": 1,
+      "content": {
+        "json": "## Change History"
+      },
+      "name": "history-heading"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "let LatestHeartbeat = materialize(\n    Heartbeat\n    | extend JoinVMUUID = tostring(VMUUID)\n    | where isnotempty(JoinVMUUID)\n    | summarize arg_max(TimeGenerated, OSName, Computer, ComputerPrivateIPs) by JoinVMUUID\n    | project JoinVMUUID, HeartbeatComputer = Computer, OSName, ComputerPrivateIPs = tostring(ComputerPrivateIPs)\n);\nConfigurationChange\n| where ConfigChangeType =~ \"Registry\"\n| where ChangeCategory in~ (\"Added\", \"Modified\", \"Removed\")\n| where ValueName == \"ForceDefenderPassiveMode\"\n| where \"*\" in ({ComputerFilter}) or Computer in ({ComputerFilter})\n| where \"{SelectedResource}\" == \"*\" or _ResourceId =~ \"{SelectedResource}\"\n| extend ConfigComputer = Computer, JoinVMUUID = tostring(VMUUID)\n| extend PreviousValue = iff(isempty(tostring(PreviousValueData)), \"<empty>\", tostring(PreviousValueData))\n| extend NewValue = iff(ChangeCategory =~ \"Removed\", \"<removed>\", iff(isempty(tostring(ValueData)), \"<empty>\", tostring(ValueData)))\n| extend ModeFilter = iff(ChangeCategory !~ \"Removed\" and trim(\" \", tostring(ValueData)) == \"1\", \"Passive\", \"Active\")\n| where \"{RegistryActivityFilter}\" == \"*\" or ChangeCategory == \"{RegistryActivityFilter}\"\n| where \"{DefenderModeFilter}\" == \"*\" or ModeFilter == \"{DefenderModeFilter}\"\n| join kind=leftouter LatestHeartbeat on JoinVMUUID\n| extend Computer = coalesce(HeartbeatComputer, ConfigComputer)\n| project TimeGenerated, Resource = _ResourceId, ValueName, NewValue, PreviousValue, Action = ChangeCategory, OSName, ['Computer Name'] = Computer, ComputerPrivateIPs, Hive, RegistryKey, ValueType, FieldsChanged\n| order by TimeGenerated desc",
+        "size": 0,
+        "showAnalytics": true,
+        "title": "Registry change audit trail",
+        "timeContextFromParameter": "TimeRange",
+        "showRefreshButton": true,
+        "showExportToExcel": true,
+        "queryType": 0,
+        "resourceType": "microsoft.operationalinsights/workspaces",
+        "crossComponentResources": [
+          "{Workspace}"
+        ],
+        "visualization": "table",
+        "gridSettings": {
+          "formatters": [
+            {
+              "columnMatch": "Resource",
+              "formatter": 13,
+              "formatOptions": {
+                "linkTarget": "Resource",
+                "linkIsContextBlade": true,
+                "showIcon": true
+              }
+            }
+          ],
+          "filter": true,
+          "sortBy": [
+            {
+              "itemKey": "TimeGenerated",
+              "sortOrder": 2
+            }
+          ],
+          "labelSettings": [
+            {
+              "columnId": "TimeGenerated",
+              "label": "Time generated"
+            },
+            {
+              "columnId": "NewValue",
+              "label": "New value"
+            },
+            {
+              "columnId": "PreviousValue",
+              "label": "Previous value"
+            }
+          ]
+        },
+        "sortBy": [
+          {
+            "itemKey": "TimeGenerated",
+            "sortOrder": 2
+          }
+        ]
+      },
+      "name": "change-history"
+    },
+    {
+      "type": 1,
+      "content": {
+        "json": "## Changes Over Time"
+      },
+      "name": "timeline-heading"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "ConfigurationChange\n| where ConfigChangeType =~ \"Registry\"\n| where ChangeCategory in~ (\"Added\", \"Modified\", \"Removed\")\n| where ValueName == \"ForceDefenderPassiveMode\"\n| where \"*\" in ({ComputerFilter}) or Computer in ({ComputerFilter})\n| summarize Changes = count() by bin(TimeGenerated, 1h), ChangeCategory\n| order by TimeGenerated asc",
+        "size": 0,
+        "showAnalytics": true,
+        "title": "ForceDefenderPassiveMode changes over time",
+        "timeContextFromParameter": "TimeRange",
+        "showRefreshButton": true,
+        "showExportToExcel": true,
+        "queryType": 0,
+        "resourceType": "microsoft.operationalinsights/workspaces",
+        "crossComponentResources": [
+          "{Workspace}"
+        ],
+        "visualization": "timechart",
+        "chartSettings": {
+          "xAxis": "TimeGenerated",
+          "yAxis": [
+            "Changes"
+          ],
+          "seriesLabelSettings": [
+            {
+              "seriesName": "Added",
+              "color": "green"
+            },
+            {
+              "seriesName": "Modified",
+              "color": "blue"
+            },
+            {
+              "seriesName": "Removed",
+              "color": "red"
+            }
+          ]
+        }
+      },
+      "name": "changes-over-time"
+    },
+    {
+      "type": 1,
+      "content": {
+        "json": "### Notes\n- Select a Registry Activity or Defender Mode tile to filter both tables. Selecting All Changes clears the activity filter.\n- Active Mode combines computers where `ForceDefenderPassiveMode` is `0`, removed, or not observed; Passive Mode is value `1`.\n- OS name and private IP data come from each computer's latest `Heartbeat` record in the selected time range.\n- Current-state views are bounded by the selected time range. Increase the range if a computer or value has not been observed recently."
+      },
+      "name": "notes"
+    }
+  ],
+  "fallbackResourceIds": [
+    "azure monitor"
+  ],
+  "fromTemplateId": "sentinel-RegistryChangeMonitor",
+  "$schema": "https://github.com/Microsoft/Application-Insights-Workbooks/blob/master/schema/workbook.json"
+}
