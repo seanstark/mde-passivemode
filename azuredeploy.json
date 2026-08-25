@@ -70,7 +70,9 @@
         "metadata": {
           "category": "Guest Configuration",
           "version": "1.0.0",
-          "requiredProviders": "Microsoft.GuestConfiguration",
+          "requiredProviders": [
+            "Microsoft.GuestConfiguration"
+          ],
           "guestConfiguration": {
             "name": "MdeDefenderModeConfig",
             "version": "1.0.0",
@@ -361,7 +363,9 @@
           "then": {
             "effect": "deployIfNotExists",
             "details": {
-              "roleDefinitionIds": "/providers/Microsoft.Authorization/roleDefinitions/088ab73d-1256-47ae-bea9-9de8e7131f31",
+              "roleDefinitionIds": [
+                "/providers/Microsoft.Authorization/roleDefinitions/088ab73d-1256-47ae-bea9-9de8e7131f31"
+              ],
               "type": "Microsoft.GuestConfiguration/guestConfigurationAssignments",
               "name": "[[concat('MdeDefenderModeConfig$pid', uniqueString(policy().assignmentId, policy().definitionReferenceId))]",
               "existenceCondition": {
@@ -444,10 +448,12 @@
                             "contentUri": "[[parameters('contentUri')]",
                             "contentHash": "1D1370D2FD0BCE55563B8554011CA2C2DE202A2C6F01A7D84FB4C02C5826F827",
                             "assignmentType": "ApplyAndAutoCorrect",
-                            "configurationParameter": {
-                              "name": "[[MdeDefenderMode]DefenderForEndpointMode;Mode",
-                              "value": "[[parameters('DefenderMode')]"
-                            }
+                            "configurationParameter": [
+                              {
+                                "name": "[[MdeDefenderMode]DefenderForEndpointMode;Mode",
+                                "value": "[[parameters('DefenderMode')]"
+                              }
+                            ]
                           }
                         }
                       },
@@ -465,10 +471,12 @@
                             "contentUri": "[[parameters('contentUri')]",
                             "contentHash": "1D1370D2FD0BCE55563B8554011CA2C2DE202A2C6F01A7D84FB4C02C5826F827",
                             "assignmentType": "ApplyAndAutoCorrect",
-                            "configurationParameter": {
-                              "name": "[[MdeDefenderMode]DefenderForEndpointMode;Mode",
-                              "value": "[[parameters('DefenderMode')]"
-                            }
+                            "configurationParameter": [
+                              {
+                                "name": "[[MdeDefenderMode]DefenderForEndpointMode;Mode",
+                                "value": "[[parameters('DefenderMode')]"
+                              }
+                            ]
                           }
                         }
                       },
@@ -486,10 +494,12 @@
                             "contentUri": "[[parameters('contentUri')]",
                             "contentHash": "1D1370D2FD0BCE55563B8554011CA2C2DE202A2C6F01A7D84FB4C02C5826F827",
                             "assignmentType": "ApplyAndAutoCorrect",
-                            "configurationParameter": {
-                              "name": "[[MdeDefenderMode]DefenderForEndpointMode;Mode",
-                              "value": "[[parameters('DefenderMode')]"
-                            }
+                            "configurationParameter": [
+                              {
+                                "name": "[[MdeDefenderMode]DefenderForEndpointMode;Mode",
+                                "value": "[[parameters('DefenderMode')]"
+                              }
+                            ]
                           }
                         }
                       }

@@ -31,7 +31,9 @@ function ConvertTo-ArmLiteral {
     }
 
     if ($Value -is [System.Collections.IEnumerable]) {
-        return @($Value | ForEach-Object { ConvertTo-ArmLiteral -Value $_ })
+        $items = @($Value | ForEach-Object { ConvertTo-ArmLiteral -Value $_ })
+        Write-Output -NoEnumerate $items
+        return
     }
 
     return $Value
