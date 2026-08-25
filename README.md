@@ -19,11 +19,25 @@ The included subscription-scope ARM template deploys:
 - A Change Tracking data collection rule (DCR) for `ForceDefenderPassiveMode`.
 - An Azure Monitor workbook for current mode and registry change history.
 
+## Table of contents
+
+- [Deploy to Azure](#deploy-to-azure)
+	- [Azure CLI](#azure-cli)
+	- [Azure PowerShell](#azure-powershell)
+- [Post-deployment](#post-deployment)
+	- [1. Enable Machine Configuration prerequisites](#1-enable-machine-configuration-prerequisites)
+	- [2. Assign the custom policy](#2-assign-the-custom-policy)
+	- [3. Associate the DCR with machines](#3-associate-the-dcr-with-machines)
+	- [4. Verify the workbook](#4-verify-the-workbook)
+	- [5. Verify policy compliance](#5-verify-policy-compliance)
+- [Package availability and updates](#package-availability-and-updates)
+- [Package authoring prerequisites](#package-authoring-prerequisites)
+- [Build and publish](#build-and-publish)
+- [References](#references)
+
 ## Deploy to Azure
 
 [![Deploy to Azure](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fseanstark%2Fmde-passivemode%2Fmain%2Fazuredeploy.json)
-
-The button becomes active after `azuredeploy.json` is committed and pushed to the public `main` branch. Until then, deploy the local template with Azure CLI or Azure PowerShell as shown below.
 
 The template deploys at subscription scope. Before deploying, confirm that:
 

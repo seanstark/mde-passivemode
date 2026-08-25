@@ -31,13 +31,14 @@
                     "true",
                     "false"
                 ],
-                "defaultValue": "false"
+                "defaultValue": "true"
             },
             "EnableAutoRemediation": {
                 "type": "string",
                 "metadata": {
                     "displayName": "Enable Auto Remediation",
-                    "description": "When true, the policy will automatically enforce remediation. When false, it will only audit"
+                    "description": "When true, the policy will automatically enforce remediation. When false, it will only audit",
+                    "portalReview": "true"
                 },
                 "allowedValues": [
                     "true",
@@ -49,17 +50,19 @@
                 "type": "string",
                 "metadata": {
                     "displayName": "Machine Configuration package URI",
-                    "description": "HTTPS URI for MdeDefenderModeConfig.zip. Any override must return the package matching the contentHash embedded in this policy definition."
+                    "description": "HTTPS URI for MdeDefenderModeConfig.zip. Any override must return the package matching the contentHash embedded in this policy definition.",
+                    "portalReview": "true"
                 },
-                "defaultValue": "https://github.com/seanstark/Azure-Policy/raw/refs/heads/main/policyDefinitions/defenderforcloud/machineConfiguration/mde-defender-mode/output/MdeDefenderModeConfig.zip"
+                "defaultValue": "https://github.com/seanstark/mde-passivemode/raw/refs/heads/main/machineConfiguration/mde-defender-mode/output/MdeDefenderModeConfig.zip"
             },
             "DefenderMode": {
                 "type": "string",
                 "metadata": {
                     "displayName": "Defender for Endpoint mode",
-                    "description": "Active writes ForceDefenderPassiveMode as DWORD 0. Passive writes it as DWORD 1."
+                    "description": "Active writes ForceDefenderPassiveMode as DWORD 0. Passive writes it as DWORD 1.",
+                    "portalReview": "true"
                 },
-                "defaultValue": "Active",
+                "defaultValue": "Passive",
                 "allowedValues": [
                     "Active",
                     "Passive"
