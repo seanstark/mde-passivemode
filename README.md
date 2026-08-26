@@ -8,7 +8,7 @@ This Machine Configuration package audits or configures this Windows registry va
 - `Active`: `0`
 - `Passive`: `1`
 
-The build generates two Azure Policy definitions:
+The custom Machine Configuration policy supports two behaviors:
 
 - **Audit** reports the actual guest registry state without changing it.
 - **Configure** applies the selected mode and autocorrects drift.
@@ -16,6 +16,7 @@ The build generates two Azure Policy definitions:
 The included subscription-scope ARM template deploys:
 
 - The custom Machine Configuration policy definition.
+- The custom **Configure Azure Benefits for Windows Arc Machines** policy definition.
 - The custom **Configure ChangeTracking for Defender Passive Mode Auditing** policy initiative.
 - A Change Tracking data collection rule (DCR) for `ForceDefenderPassiveMode`.
 - An Azure Monitor workbook for current mode and registry change history.
@@ -28,9 +29,10 @@ The included subscription-scope ARM template deploys:
 - [Post-deployment](#post-deployment)
 	- [1. Assign required policies and initiatives](#1-assign-required-policies-and-initiatives)
 	- [2. Configure the custom policy assignment](#2-configure-the-custom-policy-assignment)
-	- [3. Create remediation tasks](#3-create-remediation-tasks)
-	- [4. Verify the workbook](#4-verify-the-workbook)
-	- [5. Verify policy compliance](#5-verify-policy-compliance)
+	- [3. Configure Azure Benefits for Windows Arc](#3-configure-azure-benefits-for-windows-arc)
+	- [4. Create remediation tasks](#4-create-remediation-tasks)
+	- [5. Verify the workbook](#5-verify-the-workbook)
+	- [6. Verify policy compliance](#6-verify-policy-compliance)
 - [Package availability and updates](#package-availability-and-updates)
 - [Package authoring prerequisites](#package-authoring-prerequisites)
 - [Build and publish](#build-and-publish)
@@ -98,12 +100,13 @@ pwsh ./Build-DeploymentTemplate.ps1
 
 ### 1. Assign required policies and initiatives
 
-The template creates the custom policy definition, custom Change Tracking initiative, and DCR, but it doesn't create policy assignments. Assign both custom definitions at the management group, subscription, or resource-group scope containing the target Windows machines.
+The template creates two custom policy definitions, the custom Change Tracking initiative, and the DCR, but it doesn't create policy assignments. Assign the applicable definitions at the management group, subscription, or resource-group scope containing the target Windows machines.
 
 | Policy or initiative | Requirement | Why it is needed |
 | --- | --- | --- |
 | **Configure Microsoft Defender for Endpoint mode on Windows machines** | Required | Assigns the custom Machine Configuration package that audits or configures `ForceDefenderPassiveMode`. This definition is deployed by this template. |
 | **Configure ChangeTracking for Defender Passive Mode Auditing** | Required to track registry changes over time in more detail | Configures the identities, Guest Configuration extension, Azure Monitor Agent, Change Tracking extensions, and DCR associations for Windows Azure VMs, Arc-enabled servers, and VM scale sets. This custom initiative replaces the separate built-in Change Tracking initiatives previously required for each machine type. |
+| **Configure Azure Benefits for Windows Arc Machines** | Required only for eligible Windows Arc machines using Azure benefits | Records the Software Assurance or subscription-license attestation used to enable Azure benefits. Eligible Windows Server licenses can include Azure Change Tracking and Inventory at no additional fee. Assigning this policy is an explicit licensing attestation and must be limited to machines covered by qualifying licenses. |
 
 Retrieve the resource ID of the DCR created by this template:
 
@@ -134,7 +137,19 @@ Target machines must have Azure Monitor Agent and the Change Tracking and Invent
 
 Arc-enabled servers include Machine Configuration in the Connected Machine agent. Include Arc machines in the custom policy assignment only after reviewing the applicable Azure Arc charges.
 
-### 3. Create remediation tasks
+### 3. Configure Azure Benefits for Windows Arc
+
+Assign **Configure Azure Benefits for Windows Arc Machines** only after confirming that the targeted Arc-connected Windows servers have qualifying Windows Server licenses with active Software Assurance or active subscription licenses. The assignment attests that the organization is entitled to these Azure benefits; the policy doesn't validate license purchase records.
+
+Choose the policy effect according to the rollout stage:
+
+- `AuditIfNotExists` reports machines where the applicable Azure benefits aren't enabled without changing them.
+- `DeployIfNotExists` enables the applicable license profile settings and requires a managed identity with the role shown on the assignment's **Remediation** tab.
+- `Disabled` turns off evaluation.
+
+Start with `AuditIfNotExists` to review the affected Arc machines. Change the effect to `DeployIfNotExists` and create remediation only after the licensing and scope have been approved.
+
+### 4. Create remediation tasks
 
 After Azure Policy completes its initial compliance evaluation, use `create-remediationtasks.ps1` to create one remediation task for each noncompliant `DeployIfNotExists` or `Modify` policy in the custom initiative. The script skips non-remediable policy effects and any reference that already has an active remediation task.
 
@@ -163,7 +178,7 @@ Remove `-WhatIf` to create the remediation tasks:
 
 The script is intended for policy initiative assignments. Create remediation for the standalone Defender mode policy from its assignment in the Azure portal. Policy compliance data must exist before the script can identify noncompliant initiative references.
 
-### 4. Verify the workbook
+### 5. Verify the workbook
 
 Open **Azure Monitor > Workbooks > Defender for Endpoint Passive Mode Monitor**. The deployed workspace is selected by default. Verify that:
 
@@ -171,7 +186,7 @@ Open **Azure Monitor > Workbooks > Defender for Endpoint Passive Mode Monitor**.
 - `ConfigurationChange` contains records where `ValueName == "ForceDefenderPassiveMode"`.
 - Current mode and change-history visuals return data after Change Tracking completes its first collection cycle.
 
-### 5. Verify policy compliance
+### 6. Verify policy compliance
 
 Open **Azure Policy > Compliance**, select the policy assignment, and review per-resource Machine Configuration details. Initial assignment, package download, and guest evaluation aren't immediate; allow at least one Machine Configuration evaluation cycle before troubleshooting a pending result.
 

@@ -41,6 +41,8 @@ function ConvertTo-ArmLiteral {
 
 $policy = Get-Content -Raw (Join-Path $PSScriptRoot 'configureMDEMode.json') |
     ConvertFrom-Json -Depth 100
+$azureBenefitsPolicy = Get-Content -Raw (Join-Path $PSScriptRoot 'configureazbenefitsforwindowsarc.json') |
+    ConvertFrom-Json -Depth 100
 $workbook = Get-Content -Raw (Join-Path $PSScriptRoot 'workbook.json') |
     ConvertFrom-Json -Depth 100
 $dcrTemplate = Get-Content -Raw (Join-Path $PSScriptRoot 'dcr_ChangeTracking.json') |
@@ -66,6 +68,19 @@ if ($roleDefinitionIds.Count -eq 0) {
 $escapedRoleDefinitionIds = $roleDefinitionIds |
     ForEach-Object { "'$($_ -replace "'", "''")'" }
 $policyRule.then.details.roleDefinitionIds = "[createArray($($escapedRoleDefinitionIds -join ', '))]"
+
+$azureBenefitsPolicyParameters = ConvertTo-ArmLiteral -Value $azureBenefitsPolicy.properties.parameters
+$azureBenefitsPolicyMetadata = ConvertTo-ArmLiteral -Value $azureBenefitsPolicy.properties.metadata
+$azureBenefitsPolicyRule = ConvertTo-ArmLiteral -Value $azureBenefitsPolicy.properties.policyRule
+$azureBenefitsRoleDefinitionIds = @($azureBenefitsPolicy.properties.policyRule.then.details.roleDefinitionIds)
+if ($azureBenefitsRoleDefinitionIds.Count -eq 0) {
+    throw "The Azure Benefits policy doesn't contain any roleDefinitionIds."
+}
+
+$escapedAzureBenefitsRoleDefinitionIds = $azureBenefitsRoleDefinitionIds |
+    ForEach-Object { "'$($_ -replace "'", "''")'" }
+$azureBenefitsPolicyRule.then.details.roleDefinitionIds = "[createArray($($escapedAzureBenefitsRoleDefinitionIds -join ', '))]"
+
 $workspaceParameter = $workbook.items |
     Where-Object { $_.type -eq 9 } |
     ForEach-Object { $_.content.parameters } |
@@ -132,7 +147,7 @@ $template = [ordered] @{
     '$schema' = 'https://schema.management.azure.com/schemas/2018-05-01/subscriptionDeploymentTemplate.json#'
     contentVersion = '1.0.0.0'
     metadata = [ordered] @{
-        description = 'Deploys the Microsoft Defender for Endpoint mode policy definition, custom Change Tracking initiative, data collection rule, and Azure Monitor workbook.'
+        description = 'Deploys the Microsoft Defender for Endpoint mode and Azure Benefits policy definitions, custom Change Tracking initiative, data collection rule, and Azure Monitor workbook.'
     }
     parameters = [ordered] @{
         policyDefinitionName = [ordered] @{
@@ -147,6 +162,20 @@ $template = [ordered] @{
             defaultValue = 'Configure Microsoft Defender for Endpoint mode on Windows machines'
             metadata = [ordered] @{
                 description = 'Display name of the custom Azure Policy definition.'
+            }
+        }
+        azureBenefitsPolicyDefinitionName = [ordered] @{
+            type = 'string'
+            defaultValue = 'configure-azure-benefits-windows-arc'
+            metadata = [ordered] @{
+                description = 'Name of the custom Azure Benefits for Windows Arc policy definition.'
+            }
+        }
+        azureBenefitsPolicyDefinitionDisplayName = [ordered] @{
+            type = 'string'
+            defaultValue = 'Configure Azure Benefits for Windows Arc Machines'
+            metadata = [ordered] @{
+                description = 'Display name of the custom Azure Benefits for Windows Arc policy definition.'
             }
         }
         changeTrackingInitiativeName = [ordered] @{
@@ -229,6 +258,20 @@ $template = [ordered] @{
                 parameters = $changeTrackingInitiativeResource.properties.parameters
                 policyDefinitions = $changeTrackingInitiativeResource.properties.policyDefinitions
                 policyDefinitionGroups = $changeTrackingInitiativeResource.properties.policyDefinitionGroups
+            }
+        },
+        [ordered] @{
+            type = 'Microsoft.Authorization/policyDefinitions'
+            apiVersion = '2023-04-01'
+            name = "[parameters('azureBenefitsPolicyDefinitionName')]"
+            properties = [ordered] @{
+                policyType = 'Custom'
+                mode = $azureBenefitsPolicy.properties.mode
+                displayName = "[parameters('azureBenefitsPolicyDefinitionDisplayName')]"
+                description = $azureBenefitsPolicy.properties.description
+                metadata = $azureBenefitsPolicyMetadata
+                parameters = $azureBenefitsPolicyParameters
+                policyRule = $azureBenefitsPolicyRule
             }
         },
         [ordered] @{
