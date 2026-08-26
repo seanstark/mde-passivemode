@@ -45,6 +45,15 @@ $workbook = Get-Content -Raw (Join-Path $PSScriptRoot 'workbook.json') |
     ConvertFrom-Json -Depth 100
 $dcrTemplate = Get-Content -Raw (Join-Path $PSScriptRoot 'dcr_ChangeTracking.json') |
     ConvertFrom-Json -Depth 100
+$changeTrackingInitiativeTemplate = Get-Content -Raw (Join-Path $PSScriptRoot 'ConfigureChangeTracking_Initiative.armtemplate.json') |
+    ConvertFrom-Json -Depth 100
+
+$changeTrackingInitiativeResource = $changeTrackingInitiativeTemplate.resources |
+    Where-Object { $_.type -eq 'Microsoft.Authorization/policySetDefinitions' } |
+    Select-Object -First 1
+if (-not $changeTrackingInitiativeResource) {
+    throw "The Change Tracking initiative template doesn't contain a policy set definition."
+}
 
 $policyParameters = ConvertTo-ArmLiteral -Value $policy.parameters
 $policyMetadata = ConvertTo-ArmLiteral -Value $policy.metadata
@@ -123,7 +132,7 @@ $template = [ordered] @{
     '$schema' = 'https://schema.management.azure.com/schemas/2018-05-01/subscriptionDeploymentTemplate.json#'
     contentVersion = '1.0.0.0'
     metadata = [ordered] @{
-        description = 'Deploys the Microsoft Defender for Endpoint mode policy definition, Change Tracking data collection rule, and Azure Monitor workbook.'
+        description = 'Deploys the Microsoft Defender for Endpoint mode policy definition, custom Change Tracking initiative, data collection rule, and Azure Monitor workbook.'
     }
     parameters = [ordered] @{
         policyDefinitionName = [ordered] @{
@@ -138,6 +147,20 @@ $template = [ordered] @{
             defaultValue = 'Configure Microsoft Defender for Endpoint mode on Windows machines'
             metadata = [ordered] @{
                 description = 'Display name of the custom Azure Policy definition.'
+            }
+        }
+        changeTrackingInitiativeName = [ordered] @{
+            type = 'string'
+            defaultValue = 'configure-change-tracking'
+            metadata = [ordered] @{
+                description = 'Name of the custom Change Tracking policy initiative.'
+            }
+        }
+        changeTrackingInitiativeDisplayName = [ordered] @{
+            type = 'string'
+            defaultValue = 'Configure ChangeTracking for Defender Passive Mode Auditing'
+            metadata = [ordered] @{
+                description = 'Display name of the custom Change Tracking policy initiative.'
             }
         }
         resourceGroupName = [ordered] @{
@@ -191,6 +214,21 @@ $template = [ordered] @{
                 metadata = $policyMetadata
                 parameters = $policyParameters
                 policyRule = $policyRule
+            }
+        },
+        [ordered] @{
+            type = 'Microsoft.Authorization/policySetDefinitions'
+            apiVersion = $changeTrackingInitiativeResource.apiVersion
+            name = "[parameters('changeTrackingInitiativeName')]"
+            properties = [ordered] @{
+                policyType = 'Custom'
+                displayName = "[parameters('changeTrackingInitiativeDisplayName')]"
+                description = $changeTrackingInitiativeResource.properties.description
+                metadata = $changeTrackingInitiativeResource.properties.metadata
+                version = $changeTrackingInitiativeResource.properties.version
+                parameters = $changeTrackingInitiativeResource.properties.parameters
+                policyDefinitions = $changeTrackingInitiativeResource.properties.policyDefinitions
+                policyDefinitionGroups = $changeTrackingInitiativeResource.properties.policyDefinitionGroups
             }
         },
         [ordered] @{

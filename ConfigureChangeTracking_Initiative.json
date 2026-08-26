@@ -1,0 +1,203 @@
+{
+  "properties": {
+    "displayName": "Configure ChangeTracking for Defender Passive Mode Auditing",
+    "policyType": "Custom",
+    "description": "",
+    "metadata": {
+      "category": "Security Center",
+      "createdBy": "ef0e61b6-491b-4c77-b254-3035dfb6a89f",
+      "createdOn": "2026-08-25T23:34:03.2299299Z",
+      "updatedBy": null,
+      "updatedOn": null
+    },
+    "version": "1.0.0",
+    "parameters": {
+      "Data Collection Rule": {
+        "type": "string",
+        "metadata": {
+          "description": "Data Collection Rule for Change Tracking",
+          "displayName": "Data Collection Rule",
+          "portalReview": true,
+          "strongType": "microsoft.insights/datacollectionrules",
+          "assignPermissions": false
+        },
+        "allowedValues": [],
+        "defaultValue": ""
+      }
+    },
+    "policyDefinitions": [
+      {
+        "policyDefinitionReferenceId": "Add system-assigned managed identity to enable Guest Configuration assignments on virtual machines w_1",
+        "policyDefinitionId": "/providers/microsoft.authorization/policydefinitions/3cf2ab00-13f1-4d0c-8971-2ac904541a7e",
+        "definitionVersion": "4.1.*",
+        "effectiveDefinitionVersion": "4.1.0",
+        "parameters": {},
+        "groupNames": [
+          "System Assigned Managed Identity"
+        ]
+      },
+      {
+        "policyDefinitionReferenceId": "Add system-assigned managed identity to enable Guest Configuration assignments on VMs with a user-as_1",
+        "policyDefinitionId": "/providers/microsoft.authorization/policydefinitions/497dff13-db2a-4c0f-8603-28fa3b331ab6",
+        "definitionVersion": "4.1.*",
+        "effectiveDefinitionVersion": "4.1.0",
+        "parameters": {},
+        "groupNames": [
+          "System Assigned Managed Identity"
+        ]
+      },
+      {
+        "policyDefinitionReferenceId": "Deploy the Windows Guest Configuration extension to enable Guest Configuration assignments on Window_1",
+        "policyDefinitionId": "/providers/microsoft.authorization/policydefinitions/385f5831-96d4-41db-9a3c-cd3af78aaae6",
+        "definitionVersion": "1.3.*",
+        "effectiveDefinitionVersion": "1.3.0",
+        "parameters": {},
+        "groupNames": [
+          "Guest Configuration"
+        ]
+      },
+      {
+        "policyDefinitionReferenceId": "Configure ChangeTracking Extension for Windows Arc machines_1",
+        "policyDefinitionId": "/providers/microsoft.authorization/policydefinitions/4bb303db-d051-4099-95d2-e3e1428a4cd5",
+        "definitionVersion": "2.1.*",
+        "effectiveDefinitionVersion": "2.1.0",
+        "parameters": {},
+        "groupNames": [
+          "Change Tracking"
+        ]
+      },
+      {
+        "policyDefinitionReferenceId": "Configure ChangeTracking Extension for Windows virtual machine scale sets_1",
+        "policyDefinitionId": "/providers/microsoft.authorization/policydefinitions/4bb303db-d051-4099-95d2-e3e1428a4d2c",
+        "definitionVersion": "2.1.*",
+        "effectiveDefinitionVersion": "2.1.0",
+        "parameters": {},
+        "groupNames": [
+          "Change Tracking"
+        ]
+      },
+      {
+        "policyDefinitionReferenceId": "Configure ChangeTracking Extension for Windows virtual machines_1",
+        "policyDefinitionId": "/providers/microsoft.authorization/policydefinitions/f08f556c-12ff-464d-a7de-40cb5b6cccec",
+        "definitionVersion": "2.2.*",
+        "effectiveDefinitionVersion": "2.2.0",
+        "parameters": {},
+        "groupNames": [
+          "Change Tracking"
+        ]
+      },
+      {
+        "policyDefinitionReferenceId": "Configure Windows Arc-enabled machines to be associated with a Data Collection Rule for ChangeTracki_1",
+        "policyDefinitionId": "/providers/microsoft.authorization/policydefinitions/ef9fe2ce-a588-4edd-829c-6247069dcfdb",
+        "definitionVersion": "1.1.*",
+        "effectiveDefinitionVersion": "1.1.0",
+        "parameters": {
+          "dcrResourceId": {
+            "value": "[parameters('Data Collection Rule')]"
+          }
+        },
+        "groupNames": [
+          "Data Collection Rule"
+        ]
+      },
+      {
+        "policyDefinitionReferenceId": "Configure Windows Virtual Machines to be associated with a Data Collection Rule for ChangeTracking a_1",
+        "policyDefinitionId": "/providers/microsoft.authorization/policydefinitions/b6faa975-0add-4f35-8d1c-70bba45c4424",
+        "definitionVersion": "1.3.*",
+        "effectiveDefinitionVersion": "1.3.0",
+        "parameters": {
+          "dcrResourceId": {
+            "value": "[parameters('Data Collection Rule')]"
+          }
+        },
+        "groupNames": [
+          "Data Collection Rule"
+        ]
+      },
+      {
+        "policyDefinitionReferenceId": "Configure Windows VMSS to be associated with a Data Collection Rule for ChangeTracking and Inventory_1",
+        "policyDefinitionId": "/providers/microsoft.authorization/policydefinitions/8fd85785-1547-4a4a-bf90-d5483c9571c5",
+        "definitionVersion": "1.2.*",
+        "effectiveDefinitionVersion": "1.2.0",
+        "parameters": {
+          "dcrResourceId": {
+            "value": "[parameters('Data Collection Rule')]"
+          }
+        },
+        "groupNames": [
+          "Data Collection Rule"
+        ]
+      },
+      {
+        "policyDefinitionReferenceId": "Configure Windows Arc-enabled machines to run Azure Monitor Agent_1",
+        "policyDefinitionId": "/providers/microsoft.authorization/policydefinitions/94f686d6-9a24-4e19-91f1-de937dc171a4",
+        "definitionVersion": "2.6.*",
+        "effectiveDefinitionVersion": "2.6.0",
+        "parameters": {},
+        "groupNames": [
+          "Azure Monitor Agent"
+        ]
+      },
+      {
+        "policyDefinitionReferenceId": "Configure Windows virtual machines to run Azure Monitor Agent using system-assigned managed identity_1",
+        "policyDefinitionId": "/providers/microsoft.authorization/policydefinitions/ca817e41-e85a-4783-bc7f-dc532d36235e",
+        "definitionVersion": "4.7.*",
+        "effectiveDefinitionVersion": "4.7.0",
+        "parameters": {},
+        "groupNames": [
+          "Azure Monitor Agent"
+        ]
+      },
+      {
+        "policyDefinitionReferenceId": "Configure Windows virtual machine scale sets to run Azure Monitor Agent using system-assigned manage_1",
+        "policyDefinitionId": "/providers/microsoft.authorization/policydefinitions/4efbd9d8-6bc6-45f6-9be2-7fe9dd5d89ff",
+        "definitionVersion": "3.7.*",
+        "effectiveDefinitionVersion": "3.7.0",
+        "parameters": {},
+        "groupNames": [
+          "Azure Monitor Agent"
+        ]
+      }
+    ],
+    "policyDefinitionGroups": [
+      {
+        "name": "System Assigned Managed Identity",
+        "category": "Identity",
+        "displayName": "System Assigned Managed Identity",
+        "description": "System Assigned Managed Identity Requirements"
+      },
+      {
+        "name": "Change Tracking",
+        "category": "Change Tracking",
+        "displayName": "Change Tracking",
+        "description": "Change Tracking Extensions"
+      },
+      {
+        "name": "Data Collection Rule",
+        "category": "Data Collection Rule",
+        "displayName": "Data Collection Rule",
+        "description": "Data Collection Rule Assignments"
+      },
+      {
+        "name": "Azure Monitor Agent",
+        "category": "Azure Monitor Agent",
+        "displayName": "Azure Monitor Agent",
+        "description": "Azure Monitor Agent Requirements"
+      },
+      {
+        "name": "Guest Configuration",
+        "category": "Guest Configuration",
+        "displayName": "Guest Configuration",
+        "description": "Guest Configuration Requirments"
+      }
+    ],
+    "versions": [
+      "1.0.0"
+    ]
+  },
+  "id": "/subscriptions/9ebcb583-7adb-44ea-b688-06f1de624cc1/providers/Microsoft.Authorization/policySetDefinitions/0b0b2fd131825ce2813c59d1",
+  "type": "Microsoft.Authorization/policySetDefinitions",
+  "name": "0b0b2fd131825ce2813c59d1",
+  "systemData": {
+  }
+}

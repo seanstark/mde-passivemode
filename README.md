@@ -16,6 +16,7 @@ The build generates two Azure Policy definitions:
 The included subscription-scope ARM template deploys:
 
 - The custom Machine Configuration policy definition.
+- The custom **Configure ChangeTracking for Defender Passive Mode Auditing** policy initiative.
 - A Change Tracking data collection rule (DCR) for `ForceDefenderPassiveMode`.
 - An Azure Monitor workbook for current mode and registry change history.
 
@@ -27,8 +28,9 @@ The included subscription-scope ARM template deploys:
 - [Post-deployment](#post-deployment)
 	- [1. Assign required policies and initiatives](#1-assign-required-policies-and-initiatives)
 	- [2. Configure the custom policy assignment](#2-configure-the-custom-policy-assignment)
-	- [3. Verify the workbook](#3-verify-the-workbook)
-	- [4. Verify policy compliance](#4-verify-policy-compliance)
+	- [3. Create remediation tasks](#3-create-remediation-tasks)
+	- [4. Verify the workbook](#4-verify-the-workbook)
+	- [5. Verify policy compliance](#5-verify-policy-compliance)
 - [Package availability and updates](#package-availability-and-updates)
 - [Package authoring prerequisites](#package-authoring-prerequisites)
 - [Build and publish](#build-and-publish)
@@ -96,17 +98,14 @@ pwsh ./Build-DeploymentTemplate.ps1
 
 ### 1. Assign required policies and initiatives
 
-The template creates the custom policy definition and DCR, but it doesn't create policy assignments or associate the DCR with machines. Assign the applicable definitions at the management group, subscription, or resource-group scope containing the target machines.
+The template creates the custom policy definition, custom Change Tracking initiative, and DCR, but it doesn't create policy assignments. Assign both custom definitions at the management group, subscription, or resource-group scope containing the target Windows machines.
 
 | Policy or initiative | Requirement | Why it is needed |
 | --- | --- | --- |
 | **Configure Microsoft Defender for Endpoint mode on Windows machines** | Required | Assigns the custom Machine Configuration package that audits or configures `ForceDefenderPassiveMode`. This definition is deployed by this template. |
-| **Deploy prerequisites to enable Guest Configuration policies on virtual machines** | Required for Azure VMs and VM scale sets | Enables the system-assigned managed identity and Machine Configuration extension used to download, evaluate, and remediate the custom package. Arc-enabled servers receive Machine Configuration through the Connected Machine agent. |
-| **Enable ChangeTracking and Inventory for virtual machines** | Required to Track Registry Changes Overtime in more detail | Associates the deployed DCR and enables Change Tracking at scale. The initiative includes **Assign Built-In User-Assigned Managed Identity to Virtual Machines**, **Configure ChangeTracking extension for Windows virtual machines**, and **Configure ChangeTracking extension for Linux virtual machines**. |
-| **Enable ChangeTracking and Inventory for Arc-enabled virtual machines** | Required to Track Registry Changes Overtime in more detail | Associates the DCR and configures Change Tracking for Azure Arc-enabled machines. Use this together with `IncludeArcMachines = true` when Arc servers are also governed by the custom policy. |
-| **Enable ChangeTracking and Inventory for virtual machine scale sets** | Required to Track Registry Changes Overtime in more detail | Associates the DCR and configures Change Tracking for supported virtual machine scale sets. |
+| **Configure ChangeTracking for Defender Passive Mode Auditing** | Required to track registry changes over time in more detail | Configures the identities, Guest Configuration extension, Azure Monitor Agent, Change Tracking extensions, and DCR associations for Windows Azure VMs, Arc-enabled servers, and VM scale sets. This custom initiative replaces the separate built-in Change Tracking initiatives previously required for each machine type. |
 
-For each applicable Change Tracking initiative, provide the resource ID of the DCR created by this template. Retrieve it with:
+Retrieve the resource ID of the DCR created by this template:
 
 ```powershell
 az monitor data-collection rule show `
@@ -116,9 +115,9 @@ az monitor data-collection rule show `
 	--output tsv
 ```
 
-Select **Create a remediation task** when assigning each deploy-if-not-exists initiative so existing machines receive the required identity, extensions, and DCR association. Machines added later are evaluated automatically.
+In **Azure Policy > Definitions**, locate **Configure ChangeTracking for Defender Passive Mode Auditing**, select **Assign**, and set its **Data Collection Rule** parameter to that resource ID. Enable a managed identity and grant the roles shown on the portal's **Remediation** tab so its `DeployIfNotExists` policies can deploy the required resources.
 
-For the current Microsoft procedure and initiative selection by machine type, see [Enable Change Tracking and Inventory at scale by using Azure Policy](https://learn.microsoft.com/azure/azure-change-tracking-inventory/enable-change-tracking-at-scale-policy).
+Use the same assignment scope as the Defender mode policy. The custom initiative covers Windows Azure VMs, Arc-enabled servers, and VM scale sets; its individual policies apply only to matching resource types.
 
 ### 2. Configure the custom policy assignment
 
@@ -135,7 +134,36 @@ Target machines must have Azure Monitor Agent and the Change Tracking and Invent
 
 Arc-enabled servers include Machine Configuration in the Connected Machine agent. Include Arc machines in the custom policy assignment only after reviewing the applicable Azure Arc charges.
 
-### 3. Verify the workbook
+### 3. Create remediation tasks
+
+After Azure Policy completes its initial compliance evaluation, use `create-remediationtasks.ps1` to create one remediation task for each noncompliant `DeployIfNotExists` or `Modify` policy in the custom initiative. The script skips non-remediable policy effects and any reference that already has an active remediation task.
+
+Install the required Azure PowerShell modules and sign in:
+
+```powershell
+Install-Module Az.Resources, Az.PolicyInsights -Scope CurrentUser
+Connect-AzAccount
+Set-AzContext -Subscription '<subscription-id>'
+```
+
+Copy the full resource ID of the custom initiative assignment from **Azure Policy > Assignments**. Preview the tasks first:
+
+```powershell
+./create-remediationtasks.ps1 `
+	-PolicyAssignmentId '/subscriptions/<subscription-id>/providers/Microsoft.Authorization/policyAssignments/<assignment-name>' `
+	-WhatIf
+```
+
+Remove `-WhatIf` to create the remediation tasks:
+
+```powershell
+./create-remediationtasks.ps1 `
+	-PolicyAssignmentId '/subscriptions/<subscription-id>/providers/Microsoft.Authorization/policyAssignments/<assignment-name>'
+```
+
+The script is intended for policy initiative assignments. Create remediation for the standalone Defender mode policy from its assignment in the Azure portal. Policy compliance data must exist before the script can identify noncompliant initiative references.
+
+### 4. Verify the workbook
 
 Open **Azure Monitor > Workbooks > Defender for Endpoint Passive Mode Monitor**. The deployed workspace is selected by default. Verify that:
 
@@ -143,7 +171,7 @@ Open **Azure Monitor > Workbooks > Defender for Endpoint Passive Mode Monitor**.
 - `ConfigurationChange` contains records where `ValueName == "ForceDefenderPassiveMode"`.
 - Current mode and change-history visuals return data after Change Tracking completes its first collection cycle.
 
-### 4. Verify policy compliance
+### 5. Verify policy compliance
 
 Open **Azure Policy > Compliance**, select the policy assignment, and review per-resource Machine Configuration details. Initial assignment, package download, and guest evaluation aren't immediate; allow at least one Machine Configuration evaluation cycle before troubleshooting a pending result.
 
