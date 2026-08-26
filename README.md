@@ -36,6 +36,7 @@ The subscription-scope ARM template deploys these resources:
 - [Cost considerations](#cost-considerations)
 - [Implementation](#implementation)
 	- [Step 1 - Deploy the entire solution](#step-1---deploy-the-entire-solution)
+		- [Deploy individual policies](#deploy-individual-policies)
 	- [Step 2 - Assign Azure Benefits for Windows Arc](#step-2---assign-azure-benefits-for-windows-arc)
 	- [Step 3 - Assign the Change Tracking initiative](#step-3---assign-the-change-tracking-initiative)
 	- [Step 4 - Create initiative remediation tasks](#step-4---create-initiative-remediation-tasks)
@@ -118,6 +119,15 @@ New-AzSubscriptionDeployment `
 ```
 
 The deployment creates the policy definitions, initiative, DCR, and workbook. It intentionally does not create policy assignments because assignment scope, exclusions, identity, licensing attestation, and remediation permissions require customer review.
+
+#### Deploy individual policies
+
+When the entire solution is not required, deploy either custom policy definition independently. These templates create only the selected policy definition; they do not create assignments, managed identities, role assignments, remediation tasks, the Change Tracking initiative, the DCR, or the workbook.
+
+| Policy | Standalone template | Deployment |
+| --- | --- | --- |
+| **Configure Microsoft Defender for Endpoint mode on Windows machines** | `configureMDEMode.armtemplate.json` | [![Deploy MDE mode policy to Azure](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fseanstark%2Fmde-passivemode%2Fmain%2FconfigureMDEMode.armtemplate.json) |
+| **Configure Azure Benefits for Windows Arc Machines** | `configureazbenefitsforwindowsarc.armtemplate.json` | [![Deploy Azure Benefits policy to Azure](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fseanstark%2Fmde-passivemode%2Fmain%2Fconfigureazbenefitsforwindowsarc.armtemplate.json) |
 
 ### Step 2 - Assign Azure Benefits for Windows Arc
 

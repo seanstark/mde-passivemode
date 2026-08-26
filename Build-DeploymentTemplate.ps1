@@ -1,7 +1,13 @@
 [CmdletBinding()]
 param(
     [Parameter()]
-    [string] $OutputPath = (Join-Path $PSScriptRoot 'azuredeploy.json')
+    [string] $OutputPath = (Join-Path $PSScriptRoot 'azuredeploy.json'),
+
+    [Parameter()]
+    [string] $MdePolicyOutputPath = (Join-Path $PSScriptRoot 'configureMDEMode.armtemplate.json'),
+
+    [Parameter()]
+    [string] $AzureBenefitsPolicyOutputPath = (Join-Path $PSScriptRoot 'configureazbenefitsforwindowsarc.armtemplate.json')
 )
 
 $ErrorActionPreference = 'Stop'
@@ -309,3 +315,40 @@ $template = [ordered] @{
 
 $template | ConvertTo-Json -Depth 100 | Set-Content -Path $OutputPath -Encoding utf8
 Write-Host "Deployment template created at '$OutputPath'."
+
+$mdePolicyTemplate = [ordered] @{
+    '$schema' = 'https://schema.management.azure.com/schemas/2018-05-01/subscriptionDeploymentTemplate.json#'
+    contentVersion = '1.0.0.0'
+    metadata = [ordered] @{
+        description = 'Deploys the custom Microsoft Defender for Endpoint mode policy definition.'
+    }
+    parameters = [ordered] @{
+        policyDefinitionName = $template.parameters.policyDefinitionName
+        policyDefinitionDisplayName = $template.parameters.policyDefinitionDisplayName
+    }
+    resources = @($template.resources | Where-Object {
+        $_.type -eq 'Microsoft.Authorization/policyDefinitions' -and
+        $_.name -eq "[parameters('policyDefinitionName')]"
+    })
+}
+
+$azureBenefitsPolicyTemplate = [ordered] @{
+    '$schema' = 'https://schema.management.azure.com/schemas/2018-05-01/subscriptionDeploymentTemplate.json#'
+    contentVersion = '1.0.0.0'
+    metadata = [ordered] @{
+        description = 'Deploys the custom Azure Benefits for Windows Arc Machines policy definition.'
+    }
+    parameters = [ordered] @{
+        azureBenefitsPolicyDefinitionName = $template.parameters.azureBenefitsPolicyDefinitionName
+        azureBenefitsPolicyDefinitionDisplayName = $template.parameters.azureBenefitsPolicyDefinitionDisplayName
+    }
+    resources = @($template.resources | Where-Object {
+        $_.type -eq 'Microsoft.Authorization/policyDefinitions' -and
+        $_.name -eq "[parameters('azureBenefitsPolicyDefinitionName')]"
+    })
+}
+
+$mdePolicyTemplate | ConvertTo-Json -Depth 100 | Set-Content -Path $MdePolicyOutputPath -Encoding utf8
+$azureBenefitsPolicyTemplate | ConvertTo-Json -Depth 100 | Set-Content -Path $AzureBenefitsPolicyOutputPath -Encoding utf8
+Write-Host "Standalone policy template created at '$MdePolicyOutputPath'."
+Write-Host "Standalone policy template created at '$AzureBenefitsPolicyOutputPath'."
