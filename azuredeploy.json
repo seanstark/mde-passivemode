@@ -1149,7 +1149,130 @@
                 {
                   "type": 1,
                   "content": {
-                    "json": "## Current Values\nLatest observed record in the selected time range for each computer, registry key, and value name. Removed values are shown as `<removed>`."
+                    "json": "## Azure Policy Compliance\r\n> Policy Complaine may not reflect current state\r\n\r\nAside from the standard 24-hour cycle, Azure Policy evaluates resources during specific lifecycle events:\r\n- A resource is created or updated within a scope that has a policy assignment (~15 minutes delay).\r\n\r\n- A new policy or initiative is assigned to a scope (~5 to 30 minutes to start). An existing policy assignment is updated"
+                  },
+                  "name": "current-heading - Copy"
+                },
+                {
+                  "type": 3,
+                  "content": {
+                    "version": "KqlItem/1.0",
+                    "query": "guestconfigurationresources\r\n| where name startswith \"MdeDefenderModeConfig\"\r\n| extend vmid = properties.targetResourceId, policyAssignmentId = tostring(properties.policyAssignmentId), latestReportId = properties.latestReportId\r\n| extend intendedState = properties.guestConfiguration.configurationParameter[0].value\r\n| extend complianceStatus = properties.complianceStatus, lastComplianceStatusChecked = properties.lastComplianceStatusChecked\r\n| extend SubscriptionId = tostring(split(policyAssignmentId, '/')[2])\r\n| project vmid, lastComplianceStatusChecked, intendedState, complianceStatus, \r\nlatestReportId, SubscriptionId, policyAssignmentId\r\n",
+                    "size": 1,
+                    "showAnalytics": true,
+                    "showRefreshButton": true,
+                    "showExportToExcel": true,
+                    "queryType": 1,
+                    "resourceType": "microsoft.resourcegraph/resources",
+                    "gridSettings": {
+                      "formatters": [
+                        {
+                          "columnMatch": "vmid",
+                          "formatter": 13,
+                          "formatOptions": {
+                            "linkTarget": null,
+                            "showIcon": true
+                          }
+                        },
+                        {
+                          "columnMatch": "lastComplianceStatusChecked",
+                          "formatter": 6,
+                          "formatOptions": {
+                            "linkColumn": "latestReportId",
+                            "linkTarget": "Resource",
+                            "linkIsContextBlade": true
+                          },
+                          "dateFormat": {
+                            "formatName": "shortDateTimeNoMsPattern"
+                          }
+                        },
+                        {
+                          "columnMatch": "intendedState",
+                          "formatter": 1
+                        },
+                        {
+                          "columnMatch": "complianceStatus",
+                          "formatter": 1
+                        },
+                        {
+                          "columnMatch": "latestReportId",
+                          "formatter": 5
+                        },
+                        {
+                          "columnMatch": "SubscriptionId",
+                          "formatter": 5
+                        },
+                        {
+                          "columnMatch": "policyAssignmentId",
+                          "formatter": 13,
+                          "formatOptions": {
+                            "linkTarget": "OpenBlade",
+                            "linkIsContextBlade": true,
+                            "showIcon": true,
+                            "bladeOpenContext": {
+                              "bladeName": "AssignmentDetail.ReactView",
+                              "extensionName": "Microsoft_Azure_Policy",
+                              "bladeParameters": [
+                                {
+                                  "name": "id",
+                                  "source": "column",
+                                  "value": "policyAssignmentId"
+                                }
+                              ]
+                            }
+                          }
+                        },
+                        {
+                          "columnMatch": "policyAssignmentName",
+                          "formatter": 13,
+                          "formatOptions": {
+                            "linkTarget": "OpenBlade",
+                            "linkIsContextBlade": true,
+                            "showIcon": true,
+                            "bladeOpenContext": {
+                              "bladeName": "AssignmentDetail.ReactView",
+                              "extensionName": "Microsoft_Azure_Policy",
+                              "bladeParameters": [
+                                {
+                                  "name": "assignmentId",
+                                  "source": "column",
+                                  "value": "policyAssignmentId"
+                                }
+                              ]
+                            }
+                          }
+                        }
+                      ],
+                      "labelSettings": [
+                        {
+                          "columnId": "vmid",
+                          "label": "Computer"
+                        },
+                        {
+                          "columnId": "lastComplianceStatusChecked",
+                          "label": "Last Compliance Time Checked"
+                        },
+                        {
+                          "columnId": "intendedState",
+                          "label": "Policy Intended State"
+                        },
+                        {
+                          "columnId": "complianceStatus",
+                          "label": "Last Compliance State"
+                        },
+                        {
+                          "columnId": "policyAssignmentId",
+                          "label": "Policy Assignment"
+                        }
+                      ]
+                    }
+                  },
+                  "name": "query - 12"
+                },
+                {
+                  "type": 1,
+                  "content": {
+                    "json": "## Current Values From Change Tracking\n\n> Change Tracking audits registry values every 50 minutes\n\nLatest observed record in the selected time range for each computer, registry key, and value name. Removed values are shown as `<removed>`."
                   },
                   "name": "current-heading"
                 },
@@ -1219,7 +1342,7 @@
                 {
                   "type": 1,
                   "content": {
-                    "json": "## Change History"
+                    "json": "## Change History From Change Tracking"
                   },
                   "name": "history-heading"
                 },
@@ -1339,7 +1462,7 @@
                 }
               ],
               "fallbackResourceIds": [
-                "azure monitor"
+                "/subscriptions/9ebcb583-7adb-44ea-b688-06f1de624cc1/resourcegroups/sentinel-prd/providers/microsoft.operationalinsights/workspaces/sentinel-prd"
               ],
               "fromTemplateId": "sentinel-RegistryChangeMonitor",
               "$schema": "https://github.com/Microsoft/Application-Insights-Workbooks/blob/master/schema/workbook.json"
