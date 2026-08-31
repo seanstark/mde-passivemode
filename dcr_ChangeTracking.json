@@ -30,11 +30,11 @@
                             ],
                             "extensionName": "ChangeTracking-Windows",
                             "extensionSettings": {
-                                "enableFiles": true,
-                                "enableSoftware": true,
+                                "enableFiles": false,
+                                "enableSoftware": false,
                                 "enableRegistry": true,
                                 "enableServices": false,
-                                "enableInventory": true,
+                                "enableInventory": false,
                                 "registrySettings": {
                                     "registryCollectionFrequency": 3000,
                                     "registryInfo": [

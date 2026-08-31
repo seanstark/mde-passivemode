@@ -141,7 +141,7 @@ $policyParameter = @(
 $commonPolicyParameters = @{
     ContentUri    = $ContentUri.AbsoluteUri
     Platform      = 'Windows'
-    PolicyVersion = '1.0.0'
+    PolicyVersion = '1.0.1'
     Parameter     = $policyParameter
 }
 

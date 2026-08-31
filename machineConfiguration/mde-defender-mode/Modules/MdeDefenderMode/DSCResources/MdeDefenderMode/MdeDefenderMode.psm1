@@ -6,10 +6,15 @@ function Get-RegistryValue {
     [OutputType([int])]
     param()
 
+    $baseKey = $null
     $registryKey = $null
 
     try {
-        $registryKey = [Microsoft.Win32.Registry]::LocalMachine.OpenSubKey($registrySubKey)
+        $baseKey = [Microsoft.Win32.RegistryKey]::OpenBaseKey(
+            [Microsoft.Win32.RegistryHive]::LocalMachine,
+            [Microsoft.Win32.RegistryView]::Registry64
+        )
+        $registryKey = $baseKey.OpenSubKey($registrySubKey)
         if ($null -eq $registryKey -or
             $registryKey.GetValueKind($registryValueName) -ne [Microsoft.Win32.RegistryValueKind]::DWord) {
             return -1
@@ -23,6 +28,9 @@ function Get-RegistryValue {
     finally {
         if ($null -ne $registryKey) {
             $registryKey.Dispose()
+        }
+        if ($null -ne $baseKey) {
+            $baseKey.Dispose()
         }
     }
 }
@@ -73,16 +81,30 @@ function Set-TargetResource {
         [string] $Mode
     )
 
-    $registryPath = "HKLM:\$registrySubKey"
     $expectedValue = if ($Mode -eq 'Passive') { 1 } else { 0 }
+    $baseKey = $null
+    $registryKey = $null
 
-    New-Item -Path $registryPath -Force | Out-Null
-    New-ItemProperty `
-        -Path $registryPath `
-        -Name $registryValueName `
-        -PropertyType DWord `
-        -Value $expectedValue `
-        -Force | Out-Null
+    try {
+        $baseKey = [Microsoft.Win32.RegistryKey]::OpenBaseKey(
+            [Microsoft.Win32.RegistryHive]::LocalMachine,
+            [Microsoft.Win32.RegistryView]::Registry64
+        )
+        $registryKey = $baseKey.CreateSubKey($registrySubKey, $true)
+        $registryKey.SetValue(
+            $registryValueName,
+            $expectedValue,
+            [Microsoft.Win32.RegistryValueKind]::DWord
+        )
+    }
+    finally {
+        if ($null -ne $registryKey) {
+            $registryKey.Dispose()
+        }
+        if ($null -ne $baseKey) {
+            $baseKey.Dispose()
+        }
+    }
 }
 
 Export-ModuleMember -Function Get-TargetResource, Test-TargetResource, Set-TargetResource

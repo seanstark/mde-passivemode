@@ -20,7 +20,7 @@ function ConvertTo-ArmLiteral {
     )
 
     if ($Value -is [string]) {
-        if ($Value.StartsWith('[')) {
+        if ($Value.StartsWith('[') -and $Value.EndsWith(']')) {
             return "[$Value"
         }
 

@@ -2,16 +2,16 @@
         "mode": "Indexed",
         "metadata": {
             "category": "Guest Configuration",
-            "version": "1.0.0",
+            "version": "1.0.1",
             "requiredProviders": [
                 "Microsoft.GuestConfiguration"
             ],
             "guestConfiguration": {
                 "name": "MdeDefenderModeConfig",
-                "version": "1.0.0",
+                "version": "1.0.1",
                 "contentType": "Custom",
                 "contentUri": "https://github.com/seanstark/Azure-Policy/raw/refs/heads/main/policyDefinitions/defenderforcloud/machineConfiguration/mde-defender-mode/output/MdeDefenderModeConfig.zip",
-                "contentHash": "1D1370D2FD0BCE55563B8554011CA2C2DE202A2C6F01A7D84FB4C02C5826F827",
+                "contentHash": "CDD41438B100E63DB2BE39C93B4EEECCA34A7276AC0526D5F8A2E4B7F245B739",
                 "configurationParameter": {
                     "DefenderMode": "[MdeDefenderMode]DefenderForEndpointMode;Mode"
                 },
@@ -376,10 +376,10 @@
                                         "properties": {
                                             "guestConfiguration": {
                                                 "name": "MdeDefenderModeConfig",
-                                                "version": "1.0.0",
+                                                "version": "1.0.1",
                                                 "contentType": "Custom",
                                                 "contentUri": "[parameters('contentUri')]",
-                                                "contentHash": "1D1370D2FD0BCE55563B8554011CA2C2DE202A2C6F01A7D84FB4C02C5826F827",
+                                                "contentHash": "CDD41438B100E63DB2BE39C93B4EEECCA34A7276AC0526D5F8A2E4B7F245B739",
                                                 "assignmentType": "ApplyAndAutoCorrect",
                                                 "configurationParameter": [
                                                     {
@@ -399,10 +399,10 @@
                                         "properties": {
                                             "guestConfiguration": {
                                                 "name": "MdeDefenderModeConfig",
-                                                "version": "1.0.0",
+                                                "version": "1.0.1",
                                                 "contentType": "Custom",
                                                 "contentUri": "[parameters('contentUri')]",
-                                                "contentHash": "1D1370D2FD0BCE55563B8554011CA2C2DE202A2C6F01A7D84FB4C02C5826F827",
+                                                "contentHash": "CDD41438B100E63DB2BE39C93B4EEECCA34A7276AC0526D5F8A2E4B7F245B739",
                                                 "assignmentType": "ApplyAndAutoCorrect",
                                                 "configurationParameter": [
                                                     {
@@ -422,10 +422,10 @@
                                         "properties": {
                                             "guestConfiguration": {
                                                 "name": "MdeDefenderModeConfig",
-                                                "version": "1.0.0",
+                                                "version": "1.0.1",
                                                 "contentType": "Custom",
                                                 "contentUri": "[parameters('contentUri')]",
-                                                "contentHash": "1D1370D2FD0BCE55563B8554011CA2C2DE202A2C6F01A7D84FB4C02C5826F827",
+                                                "contentHash": "CDD41438B100E63DB2BE39C93B4EEECCA34A7276AC0526D5F8A2E4B7F245B739",
                                                 "assignmentType": "ApplyAndAutoCorrect",
                                                 "configurationParameter": [
                                                     {
