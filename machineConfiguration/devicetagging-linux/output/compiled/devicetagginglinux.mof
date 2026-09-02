@@ -1,0 +1,36 @@
+/*
+@TargetNode='localhost'
+@GeneratedBy=seanstark
+@GenerationDate=09/02/2026 14:03:18
+@GenerationHost=LAPTOP-NLOC0RP2
+*/
+
+instance of MdeLinuxDeviceTagging as $MdeLinuxDeviceTagging1ref
+{
+SourceInfo = "C:\\repos\\defenderforservers-tools\\machineConfiguration\\devicetagging-linux\\devicetagginglinux.ps1::5::9::MdeLinuxDeviceTagging";
+ DeviceTag = "DefaultDeviceTag";
+ ModuleName = "MdeLinuxDeviceTagging";
+ ResourceID = "[MdeLinuxDeviceTagging]devicetagginglinux";
+ Name = "mdatp_managed.json";
+ FileMode = "Merge";
+ ModuleVersion = "1.0.0";
+ ConfigurationName = "devicetagginglinux";
+};
+instance of OMI_ConfigurationDocument
+
+                    {
+ Version="2.0.0";
+
+                        MinimumCompatibleVersion = "1.0.0";
+
+                        CompatibleVersionAdditionalProperties= {"Omi_BaseResource:ConfigurationName"};
+
+                        Author="seanstark";
+
+                        GenerationDate="09/02/2026 14:03:18";
+
+                        GenerationHost="LAPTOP-NLOC0RP2";
+
+                        Name="devicetagginglinux";
+
+                    };

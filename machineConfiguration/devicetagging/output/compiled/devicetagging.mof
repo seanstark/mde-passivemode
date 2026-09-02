@@ -1,24 +1,18 @@
 /*
 @TargetNode='localhost'
 @GeneratedBy=seanstark
-@GenerationDate=09/02/2026 13:30:59
+@GenerationDate=09/02/2026 14:38:55
 @GenerationHost=LAPTOP-NLOC0RP2
 */
 
-instance of MSFT_RegistryResource as $MSFT_RegistryResource1ref
+instance of MdeDeviceTagging as $MdeDeviceTagging1ref
 {
-ValueType = "String";
- ResourceID = "[Registry]devicetagging";
- ValueName = "Group";
- Force = True;
- ModuleName = "PSDscResources";
- SourceInfo = "C:\\repos\\defenderforservers-tools\\machineConfiguration\\devicetagging\\devicetagging.ps1::5::9::Registry";
- Ensure = "Present";
- ValueData = {
-    "DefaultDeviceTag"
-};
- Key = "HKEY_LOCAL_MACHINE\\SOFTWARE\\Policies\\Microsoft\\Windows Advanced Threat Protection\\DeviceTagging";
- ModuleVersion = "2.12.0.0";
+ModuleVersion = "1.0.0";
+ DeviceTag = "DefaultDeviceTag";
+ ModuleName = "MdeDeviceTagging";
+ Name = "Group";
+ SourceInfo = "C:\\repos\\defenderforservers-tools\\machineConfiguration\\devicetagging\\devicetagging.ps1::5::9::MdeDeviceTagging";
+ ResourceID = "[MdeDeviceTagging]devicetagging";
  ConfigurationName = "devicetagging";
 };
 instance of OMI_ConfigurationDocument
@@ -32,7 +26,7 @@ instance of OMI_ConfigurationDocument
 
                         Author="seanstark";
 
-                        GenerationDate="09/02/2026 13:30:59";
+                        GenerationDate="09/02/2026 14:38:55";
 
                         GenerationHost="LAPTOP-NLOC0RP2";
 

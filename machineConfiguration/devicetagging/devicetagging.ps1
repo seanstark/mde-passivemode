@@ -1,14 +1,10 @@
 Configuration devicetagging {
-    Import-DscResource -ModuleName PSDscResources
+    Import-DscResource -ModuleName MdeDeviceTagging -ModuleVersion '1.0.0'
 
     Node localhost {
-        Registry devicetagging {
-            Ensure    = 'Present'
-            Key       = 'HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows Advanced Threat Protection\DeviceTagging'
-            ValueName = 'Group'
-            ValueData = 'DefaultDeviceTag'
-            ValueType = 'String'
-            Force     = $true
+        MdeDeviceTagging devicetagging {
+            Name      = 'Group'
+            DeviceTag = 'DefaultDeviceTag'
         }
     }
 }

@@ -322,6 +322,41 @@ az rest `
 	--body '@devicetagging.json'
 ```
 
+### Linux device tagging
+
+The `machineConfiguration/devicetagging-linux` package manages:
+
+```text
+/etc/opt/microsoft/mdatp/managed/mdatp_managed.json
+```
+
+Build the Linux package and its audit and configure policies from x64 PowerShell 7:
+
+```powershell
+pwsh ./machineConfiguration/devicetagging-linux/Build-devicetagginglinux.ps1 `
+	-ContentUri 'https://github.com/seanstark/defenderforservers-tools/raw/refs/heads/main/machineConfiguration/devicetagging-linux/output/devicetagginglinux.zip'
+```
+
+The portal-ready definition is written to `configureMDEdevicetaggingLinux.json`. Its `FileMode` parameter controls how DSC manages the file:
+
+- `Merge` preserves unrelated valid JSON settings and replaces only the `edr.tags` entry whose key is `GROUP`. It refuses to modify malformed existing JSON.
+- `Overwrite` replaces the entire file with only the following device-tag configuration:
+
+```json
+{
+	"edr": {
+		"tags": [
+			{
+				"key": "GROUP",
+				"value": "<DeviceTag>"
+			}
+		]
+	}
+}
+```
+
+The resource writes the file atomically and applies mode `0640` with ownership `root:root`. Publish the generated `machineConfiguration/devicetagging-linux/output/devicetagginglinux.zip` at the policy's `contentUri` before assigning the policy.
+
 Do not commit a long-lived SAS token. For private Blob Storage, use a managed-identity package access design instead of embedding credentials in source control.
 
 ## References

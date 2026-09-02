@@ -10,7 +10,7 @@ param(
     [uri] $PolicySkeletonUri = 'https://github.com/seanstark/defenderforservers-tools/raw/refs/heads/main/machineConfiguration/mde-defender-mode/output/MdeDefenderModeConfig.zip',
 
     [Parameter()]
-    [string] $ConfigurePolicyOutputPath = (Join-Path $PSScriptRoot '..\..\configureMDEdevicetagging.json')
+    [string] $ConfigurePolicyOutputPath = (Join-Path $PSScriptRoot '..\..\configureMDEdevicetaggingLinux.json')
 )
 
 $ErrorActionPreference = 'Stop'
@@ -22,12 +22,11 @@ if ($PSVersionTable.PSEdition -ne 'Core' -or $PSVersionTable.PSVersion.Major -lt
 if ($IsWindows -and
     [System.Runtime.InteropServices.RuntimeInformation]::ProcessArchitecture -ne
         [System.Runtime.InteropServices.Architecture]::X64) {
-    throw 'Windows DSC configuration compilation requires an x64 PowerShell 7 process.'
+    throw 'DSC configuration compilation requires an x64 PowerShell 7 process.'
 }
 
-$configurationName = 'devicetagging'
-$packageVersion = '1.0.1'
-$configurationPath = Join-Path $PSScriptRoot 'devicetagging.ps1'
+$configurationName = 'devicetagginglinux'
+$configurationPath = Join-Path $PSScriptRoot 'devicetagginglinux.ps1'
 $modulePath = Join-Path $PSScriptRoot 'Modules'
 $compiledPath = Join-Path $OutputPath 'compiled'
 $packagePath = Join-Path $OutputPath "$configurationName.zip"
@@ -53,10 +52,11 @@ foreach ($requiredModule in $requiredModules) {
 
 New-Item -ItemType Directory -Path $compiledPath -Force | Out-Null
 $env:PSModulePath = "$modulePath$([System.IO.Path]::PathSeparator)$env:PSModulePath"
+
 Import-Module PSDesiredStateConfiguration -RequiredVersion 2.0.7
 Import-Module GuestConfiguration
 . $configurationPath
-devicetagging -OutputPath $compiledPath
+devicetagginglinux -OutputPath $compiledPath
 
 $compiledMof = Join-Path $compiledPath 'localhost.mof'
 $namedMof = Join-Path $compiledPath "$configurationName.mof"
@@ -65,7 +65,6 @@ Move-Item -Path $compiledMof -Destination $namedMof -Force
 New-GuestConfigurationPackage `
     -Name $configurationName `
     -Configuration $namedMof `
-    -Version $packageVersion `
     -Path $OutputPath `
     -Type AuditAndSet `
     -Force | Out-Host
@@ -88,32 +87,42 @@ $policyParameter = @(
     @{
         Name                 = 'DeviceTag'
         DisplayName          = 'Microsoft Defender for Endpoint device tag'
-        Description          = 'Value written to the Group registry value. The value must contain no more than 200 characters.'
-        ResourceType         = 'MdeDeviceTagging'
-        ResourceId           = 'devicetagging'
+        Description          = 'GROUP tag written to mdatp_managed.json. The value must contain 1 to 200 characters.'
+        ResourceType         = 'MdeLinuxDeviceTagging'
+        ResourceId           = 'devicetagginglinux'
         ResourcePropertyName = 'DeviceTag'
         DefaultValue         = 'DefaultDeviceTag'
+    },
+    @{
+        Name                 = 'FileMode'
+        DisplayName          = 'Managed file update mode'
+        Description          = 'Merge preserves unrelated valid settings. Overwrite replaces the entire file with only the GROUP device tag configuration.'
+        ResourceType         = 'MdeLinuxDeviceTagging'
+        ResourceId           = 'devicetagginglinux'
+        ResourcePropertyName = 'FileMode'
+        DefaultValue         = 'Merge'
+        AllowedValues        = @('Merge', 'Overwrite')
     }
 )
 
 $commonPolicyParameters = @{
     ContentUri    = $PolicySkeletonUri.AbsoluteUri
-    Platform      = 'Windows'
-    PolicyVersion = $packageVersion
+    Platform      = 'Linux'
+    PolicyVersion = '1.0.0'
     Parameter     = $policyParameter
 }
 
 New-GuestConfigurationPolicy @commonPolicyParameters `
-    -PolicyId 'ff037a13-f60c-41c5-943f-1345f4f7c06b' `
-    -DisplayName 'Audit Microsoft Defender for Endpoint device tagging on Windows machines' `
-    -Description 'Audits the Group device tag registry value by using Azure Machine Configuration.' `
+    -PolicyId 'f99106d5-2b81-4900-8256-c4c839762497' `
+    -DisplayName 'Audit Microsoft Defender for Endpoint device tagging on Linux machines' `
+    -Description 'Audits the GROUP device tag in mdatp_managed.json by using Azure Machine Configuration.' `
     -Path (Join-Path $policyPath 'audit') `
     -Mode Audit | Out-Host
 
 New-GuestConfigurationPolicy @commonPolicyParameters `
-    -PolicyId '29b0f2de-9fbb-4bb1-9929-04b80b15edac' `
-    -DisplayName 'Configure Microsoft Defender for Endpoint device tagging on Windows machines' `
-    -Description 'Configures and autocorrects the Group device tag registry value by using Azure Machine Configuration.' `
+    -PolicyId 'ca51a853-3d5d-457c-8215-e85a782563b2' `
+    -DisplayName 'Configure Microsoft Defender for Endpoint device tagging on Linux machines' `
+    -Description 'Configures the GROUP device tag in mdatp_managed.json by using Azure Machine Configuration.' `
     -Path (Join-Path $policyPath 'configure') `
     -Mode ApplyAndAutoCorrect | Out-Host
 
@@ -157,14 +166,12 @@ foreach ($generatedPolicy in $generatedPolicies) {
 
     $properties.metadata.guestConfiguration.contentUri = $ContentUri.AbsoluteUri
     $properties.metadata.guestConfiguration.contentHash = $packageHash
-    $properties.metadata.guestConfiguration |
-        Add-Member -NotePropertyName version -NotePropertyValue $packageVersion -Force
 
     $properties.parameters | Add-Member -NotePropertyName tagName -NotePropertyValue ([ordered] @{
         type = 'string'
         metadata = [ordered] @{
             displayName = 'Optional Azure tag name'
-            description = 'Name of the Azure resource tag used to filter machines. Leave blank to include all eligible Windows machines.'
+            description = 'Name of the Azure resource tag used to filter machines. Leave blank to include all eligible Linux machines.'
         }
         defaultValue = ''
     })
@@ -180,6 +187,10 @@ foreach ($generatedPolicy in $generatedPolicies) {
     $machineEligibility = $properties.policyRule.if
     $properties.policyRule.if = [ordered] @{
         allOf = @(
+            [ordered] @{
+                value = "[length(parameters('DeviceTag'))]"
+                greaterOrEquals = 1
+            },
             [ordered] @{
                 value = "[length(parameters('DeviceTag'))]"
                 lessOrEquals = 200
@@ -206,11 +217,6 @@ foreach ($generatedPolicy in $generatedPolicies) {
     }
     foreach ($resource in @($properties.policyRule.then.details.deployment.properties.template.resources)) {
         $guestConfiguration = $resource.properties.guestConfiguration
-        if ($null -eq $guestConfiguration) {
-            continue
-        }
-        $guestConfiguration |
-            Add-Member -NotePropertyName version -NotePropertyValue $packageVersion -Force
         if ($guestConfiguration.configurationParameter) {
             $guestConfiguration.configurationParameter = @($guestConfiguration.configurationParameter)
         }

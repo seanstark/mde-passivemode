@@ -1,0 +1,6 @@
+[ClassVersion("1.0.0.0"), FriendlyName("MdeDeviceTagging")]
+class MdeDeviceTagging : OMI_BaseResource
+{
+    [Key] string Name;
+    [Required] string DeviceTag;
+};
