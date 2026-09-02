@@ -75,7 +75,7 @@ Estimate expected machine count and registry-change volume, review the destinati
 
 Use the button to deploy `azuredeploy.json` at subscription scope:
 
-[![Deploy to Azure](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fseanstark%2Fmde-passivemode%2Fmain%2Fazuredeploy.json)
+[![Deploy to Azure](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fseanstark%2Fdefenderforservers-tools%2Fmain%2Fazuredeploy.json)
 
 Required parameters:
 
@@ -126,8 +126,8 @@ When the entire solution is not required, deploy either custom policy definition
 
 | Policy | Standalone template | Deployment |
 | --- | --- | --- |
-| **Configure Microsoft Defender for Endpoint mode on Windows machines** | `configureMDEMode.armtemplate.json` | [![Deploy MDE mode policy to Azure](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fseanstark%2Fmde-passivemode%2Fmain%2FconfigureMDEMode.armtemplate.json) |
-| **Configure Azure Benefits for Windows Arc Machines** | `configureazbenefitsforwindowsarc.armtemplate.json` | [![Deploy Azure Benefits policy to Azure](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fseanstark%2Fmde-passivemode%2Fmain%2Fconfigureazbenefitsforwindowsarc.armtemplate.json) |
+| **Configure Microsoft Defender for Endpoint mode on Windows machines** | `configureMDEMode.armtemplate.json` | [![Deploy MDE mode policy to Azure](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fseanstark%2Fdefenderforservers-tools%2Fmain%2FconfigureMDEMode.armtemplate.json) |
+| **Configure Azure Benefits for Windows Arc Machines** | `configureazbenefitsforwindowsarc.armtemplate.json` | [![Deploy Azure Benefits policy to Azure](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fseanstark%2Fdefenderforservers-tools%2Fmain%2Fconfigureazbenefitsforwindowsarc.armtemplate.json) |
 
 ### Step 2 - Assign Azure Benefits for Windows Arc
 
@@ -282,6 +282,45 @@ pwsh ./Build-MdeDefenderMode.ps1 -ContentUri 'https://<account>.blob.core.window
 ```
 
 The generated JSON files are written below `output/policies`. The authoring cmdlet calculates and embeds the package content hash, so regenerate both definitions whenever the package changes.
+
+## Defender for Endpoint device tagging
+
+The `machineConfiguration/devicetagging` package uses the `PSDscResources` Registry resource to manage this `REG_SZ` value:
+
+```text
+HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows Advanced Threat Protection\DeviceTagging\Group
+```
+
+Install the additional authoring module, then build the package and policy from x64 PowerShell 7:
+
+```powershell
+Install-Module PSDscResources -MinimumVersion 2.12.0 -Scope CurrentUser
+
+pwsh ./machineConfiguration/devicetagging/Build-devicetagging.ps1 `
+	-ContentUri 'https://github.com/seanstark/defenderforservers-tools/raw/refs/heads/main/machineConfiguration/devicetagging/output/devicetagging.zip'
+```
+
+The build creates `machineConfiguration/devicetagging/output/devicetagging.zip`, audit and configure definitions under `output/policies`, and the configure definition at `devicetagging.json`. Publish the ZIP at the supplied HTTPS URI before assigning the policy.
+
+The policy parameters are:
+
+- `DeviceTag`: The `Group` registry value to write. The policy applies only when the value is 200 characters or fewer.
+- `tagName`: Optional Azure resource tag name. Leave blank to include all eligible Windows machines.
+- `tagValue`: Azure resource tag value required when `tagName` is specified.
+- `IncludeArcMachines`: Includes supported Azure Arc machines when set to `true`.
+- `EnableAutoRemediation`: Enables `ApplyAndAutoCorrect` behavior when set to `true`.
+
+Azure Policy string parameters do not support assignment-time `maxLength` validation. The definition therefore guards deployment with `length(DeviceTag) <= 200`; use an assignment workflow with equivalent input validation when assignments are created outside this repository.
+
+Create the custom policy definition after publishing the package:
+
+```powershell
+$subscriptionId = az account show --query id --output tsv
+az rest `
+	--method put `
+	--url "https://management.azure.com/subscriptions/$subscriptionId/providers/Microsoft.Authorization/policyDefinitions/devicetagging?api-version=2023-04-01" `
+	--body '@devicetagging.json'
+```
 
 Do not commit a long-lived SAS token. For private Blob Storage, use a managed-identity package access design instead of embedding credentials in source control.
 

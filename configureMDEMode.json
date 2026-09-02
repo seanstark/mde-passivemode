@@ -10,7 +10,7 @@
                 "name": "MdeDefenderModeConfig",
                 "version": "1.0.1",
                 "contentType": "Custom",
-                "contentUri": "https://github.com/seanstark/mde-passivemode/raw/refs/heads/main/machineConfiguration/mde-defender-mode/output/MdeDefenderModeConfig.zip",
+                "contentUri": "https://github.com/seanstark/defenderforservers-tools/raw/refs/heads/main/machineConfiguration/mde-defender-mode/output/MdeDefenderModeConfig.zip",
                 "contentHash": "CDD41438B100E63DB2BE39C93B4EEECCA34A7276AC0526D5F8A2E4B7F245B739",
                 "configurationParameter": {
                     "DefenderMode": "[MdeDefenderMode]DefenderForEndpointMode;Mode"
@@ -53,7 +53,7 @@
                     "description": "HTTPS URI for MdeDefenderModeConfig.zip. Any override must return the package matching the contentHash embedded in this policy definition.",
                     "portalReview": "true"
                 },
-                "defaultValue": "https://github.com/seanstark/mde-passivemode/raw/refs/heads/main/machineConfiguration/mde-defender-mode/output/MdeDefenderModeConfig.zip"
+                "defaultValue": "https://github.com/seanstark/defenderforservers-tools/raw/refs/heads/main/machineConfiguration/mde-defender-mode/output/MdeDefenderModeConfig.zip"
             },
             "DefenderMode": {
                 "type": "string",
