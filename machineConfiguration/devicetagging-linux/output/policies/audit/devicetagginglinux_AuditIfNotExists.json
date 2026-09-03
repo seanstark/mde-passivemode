@@ -13,7 +13,7 @@
         "name": "devicetagginglinux",
         "contentType": "Custom",
         "contentUri": "https://github.com/seanstark/defenderforservers-tools/raw/refs/heads/main/machineConfiguration/devicetagging-linux/output/devicetagginglinux.zip",
-        "contentHash": "1E6FBF2069A333FAB909E480E5060FCE7ED2BF57474C401467FDAF59DA7BF578",
+        "contentHash": "9245CC836EAF1330A3370C140F4E493C9B80C48BEC950B72E69B40696BAE7699",
         "configurationParameter": {
           "DeviceTag": "[MdeLinuxDeviceTagging]devicetagginglinux;DeviceTag",
           "FileMode": "[MdeLinuxDeviceTagging]devicetagginglinux;FileMode"
@@ -34,13 +34,14 @@
           "true",
           "false"
         ],
-        "defaultValue": "false"
+        "defaultValue": "true"
       },
       "DeviceTag": {
         "type": "string",
         "metadata": {
           "displayName": "Microsoft Defender for Endpoint device tag",
-          "description": "GROUP tag written to mdatp_managed.json. The value must contain 1 to 200 characters."
+          "description": "GROUP tag written to mdatp_managed.json. The value must contain 1 to 200 characters.",
+          "portalReview": "true"
         },
         "defaultValue": "DefaultDeviceTag"
       },
@@ -48,7 +49,8 @@
         "type": "string",
         "metadata": {
           "displayName": "Managed file update mode",
-          "description": "Merge preserves unrelated valid settings. Overwrite replaces the entire file with only the GROUP device tag configuration."
+          "description": "Merge preserves unrelated valid settings. Overwrite replaces the entire file with only the GROUP device tag configuration.",
+          "portalReview": "true"
         },
         "defaultValue": "Merge",
         "allowedValues": [
@@ -60,7 +62,8 @@
         "type": "string",
         "metadata": {
           "displayName": "Optional Azure tag name",
-          "description": "Name of the Azure resource tag used to filter machines. Leave blank to include all eligible Linux machines."
+          "description": "Name of the Azure resource tag used to filter machines. Leave blank to include all eligible Linux machines.",
+          "portalReview": "true"
         },
         "defaultValue": ""
       },
@@ -68,7 +71,8 @@
         "type": "string",
         "metadata": {
           "displayName": "Optional Azure tag value",
-          "description": "Required value for the Azure resource tag. Used only when a tag name is provided."
+          "description": "Required value for the Azure resource tag. Used only when a tag name is provided.",
+          "portalReview": "true"
         },
         "defaultValue": ""
       }
@@ -111,175 +115,20 @@
                   {
                     "anyOf": [
                       {
-                        "field": "Microsoft.Compute/imagePublisher",
-                        "in": [
-                          "microsoft-aks",
-                          "qubole-inc",
-                          "datastax",
-                          "couchbase",
-                          "scalegrid",
-                          "checkpoint",
-                          "paloaltonetworks",
-                          "debian",
-                          "credativ"
-                        ]
+                        "field": "Microsoft.Compute/virtualMachines/osProfile.linuxConfiguration",
+                        "exists": true
                       },
                       {
-                        "allOf": [
-                          {
-                            "field": "Microsoft.Compute/imagePublisher",
-                            "equals": "OpenLogic"
-                          },
-                          {
-                            "field": "Microsoft.Compute/imageSKU",
-                            "notLike": "6*"
-                          }
-                        ]
+                        "field": "Microsoft.Compute/virtualMachines/storageProfile.osDisk.osType",
+                        "like": "Linux*"
                       },
                       {
-                        "allOf": [
-                          {
-                            "field": "Microsoft.Compute/imagePublisher",
-                            "equals": "Oracle"
-                          },
-                          {
-                            "field": "Microsoft.Compute/imageSKU",
-                            "notLike": "6*"
-                          }
-                        ]
+                        "field": "Microsoft.Compute/virtualMachineScaleSets/osProfile.linuxConfiguration",
+                        "exists": true
                       },
                       {
-                        "allOf": [
-                          {
-                            "field": "Microsoft.Compute/imagePublisher",
-                            "equals": "RedHat"
-                          },
-                          {
-                            "field": "Microsoft.Compute/imageSKU",
-                            "notLike": "6*"
-                          }
-                        ]
-                      },
-                      {
-                        "allOf": [
-                          {
-                            "field": "Microsoft.Compute/imagePublisher",
-                            "equals": "center-for-internet-security-inc"
-                          },
-                          {
-                            "field": "Microsoft.Compute/imageOffer",
-                            "notLike": "cis-windows*"
-                          }
-                        ]
-                      },
-                      {
-                        "allOf": [
-                          {
-                            "field": "Microsoft.Compute/imagePublisher",
-                            "equals": "Suse"
-                          },
-                          {
-                            "field": "Microsoft.Compute/imageSKU",
-                            "notLike": "11*"
-                          }
-                        ]
-                      },
-                      {
-                        "allOf": [
-                          {
-                            "field": "Microsoft.Compute/imagePublisher",
-                            "equals": "Canonical"
-                          },
-                          {
-                            "field": "Microsoft.Compute/imageSKU",
-                            "notLike": "12*"
-                          }
-                        ]
-                      },
-                      {
-                        "allOf": [
-                          {
-                            "field": "Microsoft.Compute/imagePublisher",
-                            "equals": "microsoft-dsvm"
-                          },
-                          {
-                            "field": "Microsoft.Compute/imageOffer",
-                            "notLike": "dsvm-win*"
-                          }
-                        ]
-                      },
-                      {
-                        "allOf": [
-                          {
-                            "field": "Microsoft.Compute/imagePublisher",
-                            "equals": "cloudera"
-                          },
-                          {
-                            "field": "Microsoft.Compute/imageSKU",
-                            "notLike": "6*"
-                          }
-                        ]
-                      },
-                      {
-                        "allOf": [
-                          {
-                            "field": "Microsoft.Compute/imagePublisher",
-                            "equals": "microsoft-ads"
-                          },
-                          {
-                            "field": "Microsoft.Compute/imageOffer",
-                            "like": "linux*"
-                          }
-                        ]
-                      },
-                      {
-                        "allOf": [
-                          {
-                            "anyOf": [
-                              {
-                                "field": "Microsoft.Compute/virtualMachines/osProfile.linuxConfiguration",
-                                "exists": true
-                              },
-                              {
-                                "field": "Microsoft.Compute/virtualMachines/storageProfile.osDisk.osType",
-                                "like": "Linux*"
-                              },
-                              {
-                                "field": "Microsoft.Compute/virtualMachineScaleSets/osProfile.linuxConfiguration",
-                                "exists": true
-                              },
-                              {
-                                "field": "Microsoft.Compute/virtualMachineScaleSets/virtualMachineProfile.storageProfile.osDisk.osType",
-                                "like": "Linux*"
-                              }
-                            ]
-                          },
-                          {
-                            "anyOf": [
-                              {
-                                "field": "Microsoft.Compute/imagePublisher",
-                                "exists": false
-                              },
-                              {
-                                "field": "Microsoft.Compute/imagePublisher",
-                                "notIn": [
-                                  "OpenLogic",
-                                  "RedHat",
-                                  "credativ",
-                                  "Suse",
-                                  "Canonical",
-                                  "microsoft-dsvm",
-                                  "cloudera",
-                                  "microsoft-ads",
-                                  "center-for-internet-security-inc",
-                                  "Oracle",
-                                  "AzureDatabricks",
-                                  "azureopenshift"
-                                ]
-                              }
-                            ]
-                          }
-                        ]
+                        "field": "Microsoft.Compute/virtualMachineScaleSets/virtualMachineProfile.storageProfile.osDisk.osType",
+                        "like": "Linux*"
                       }
                     ]
                   }
@@ -300,7 +149,7 @@
                             "equals": "Microsoft.HybridCompute/machines"
                           },
                           {
-                            "field": "Microsoft.HybridCompute/imageOffer",
+                            "field": "Microsoft.HybridCompute/machines/osType",
                             "like": "linux*"
                           }
                         ]

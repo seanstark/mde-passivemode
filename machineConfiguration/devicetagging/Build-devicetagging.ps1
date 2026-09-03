@@ -27,6 +27,7 @@ if ($IsWindows -and
 
 $configurationName = 'defenderdevicetagging'
 $packageVersion = '1.0.2'
+$guestConfigurationRoleDefinitionId = '/providers/Microsoft.Authorization/roleDefinitions/088ab73d-1256-47ae-bea9-9de8e7131f31'
 $configurationPath = Join-Path $PSScriptRoot 'defenderdevicetagging.ps1'
 $modulePath = Join-Path $PSScriptRoot 'Modules'
 $compiledPath = Join-Path $OutputPath 'compiled'
@@ -177,7 +178,68 @@ foreach ($generatedPolicy in $generatedPolicies) {
         defaultValue = ''
     })
 
-    $machineEligibility = $properties.policyRule.if
+    foreach ($parameterName in 'IncludeArcMachines', 'EnableAutoRemediation') {
+        if ($properties.parameters.PSObject.Properties[$parameterName]) {
+            $properties.parameters.$parameterName.defaultValue = 'true'
+        }
+    }
+
+    foreach ($parameter in $properties.parameters.PSObject.Properties) {
+        $parameterMetadata = $parameter.Value.metadata
+        if ($parameterMetadata -is [System.Collections.IDictionary]) {
+            $parameterMetadata['portalReview'] = 'true'
+        }
+        else {
+            $parameterMetadata |
+                Add-Member -NotePropertyName portalReview -NotePropertyValue 'true' -Force
+        }
+    }
+
+    $machineEligibility = [ordered] @{
+        anyOf = @(
+            [ordered] @{
+                allOf = @(
+                    [ordered] @{
+                        anyOf = @(
+                            [ordered] @{ field = 'type'; equals = 'Microsoft.Compute/virtualMachines' },
+                            [ordered] @{ field = 'type'; equals = 'Microsoft.Compute/virtualMachineScaleSets' }
+                        )
+                    },
+                    [ordered] @{ field = "tags['aks-managed-orchestrator']"; exists = 'false' },
+                    [ordered] @{ field = "tags['aks-managed-poolName']"; exists = 'false' },
+                    [ordered] @{
+                        anyOf = @(
+                            [ordered] @{ field = 'Microsoft.Compute/virtualMachines/osProfile.windowsConfiguration'; exists = $true },
+                            [ordered] @{ field = 'Microsoft.Compute/virtualMachines/storageProfile.osDisk.osType'; like = 'Windows*' },
+                            [ordered] @{ field = 'Microsoft.Compute/VirtualMachineScaleSets/osProfile.windowsConfiguration'; exists = $true },
+                            [ordered] @{ field = 'Microsoft.Compute/virtualMachineScaleSets/virtualMachineProfile.storageProfile.osDisk.osType'; like = 'Windows*' }
+                        )
+                    }
+                )
+            },
+            [ordered] @{
+                allOf = @(
+                    [ordered] @{ value = "[parameters('IncludeArcMachines')]"; equals = 'true' },
+                    [ordered] @{
+                        anyOf = @(
+                            [ordered] @{
+                                allOf = @(
+                                    [ordered] @{ field = 'type'; equals = 'Microsoft.HybridCompute/machines' },
+                                    [ordered] @{ field = 'Microsoft.HybridCompute/machines/osType'; like = 'windows*' }
+                                )
+                            },
+                            [ordered] @{
+                                allOf = @(
+                                    [ordered] @{ field = 'type'; equals = 'Microsoft.ConnectedVMwarevSphere/virtualMachines' },
+                                    [ordered] @{ field = 'Microsoft.ConnectedVMwarevSphere/virtualMachines/osProfile.osType'; like = 'windows*' }
+                                )
+                            }
+                        )
+                    }
+                )
+            }
+        )
+    }
     $properties.policyRule.if = [ordered] @{
         allOf = @(
             [ordered] @{
@@ -201,8 +263,14 @@ foreach ($generatedPolicy in $generatedPolicies) {
     }
 
     $properties.metadata.requiredProviders = @($properties.metadata.requiredProviders)
-    if ($properties.policyRule.then.details.roleDefinitionIds) {
-        $properties.policyRule.then.details.roleDefinitionIds = @($properties.policyRule.then.details.roleDefinitionIds)
+    if ($properties.policyRule.then.effect -ne 'auditIfNotExists') {
+        $properties.policyRule.then.details.roleDefinitionIds = @($guestConfigurationRoleDefinitionId)
+    }
+
+    $roleDefinitionIds = @($properties.policyRule.then.details.roleDefinitionIds | Where-Object { $_ })
+    if ($roleDefinitionIds.Count -gt 0 -and
+        @($roleDefinitionIds | Where-Object { $_ -notmatch '^/providers/Microsoft\.Authorization/roleDefinitions/[0-9a-fA-F-]{36}$' }).Count -gt 0) {
+        throw "Generated policy contains an invalid roleDefinitionIds value: $($roleDefinitionIds -join ', ')."
     }
     foreach ($resource in @($properties.policyRule.then.details.deployment.properties.template.resources)) {
         $guestConfiguration = $resource.properties.guestConfiguration

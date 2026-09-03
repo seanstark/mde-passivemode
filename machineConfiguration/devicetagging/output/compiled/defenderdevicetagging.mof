@@ -1,18 +1,18 @@
 /*
 @TargetNode='localhost'
 @GeneratedBy=seanstark
-@GenerationDate=09/03/2026 06:40:20
+@GenerationDate=09/03/2026 10:08:32
 @GenerationHost=LAPTOP-NLOC0RP2
 */
 
 instance of MdeDeviceTagging as $MdeDeviceTagging1ref
 {
 SourceInfo = "C:\\repos\\defenderforservers-tools\\machineConfiguration\\devicetagging\\defenderdevicetagging.ps1::5::9::MdeDeviceTagging";
- ModuleVersion = "1.0.1";
+ ModuleName = "MdeDeviceTagging";
+ Name = "Group";
  ResourceID = "[MdeDeviceTagging]defenderdevicetagging";
  DeviceTag = "DefaultDeviceTag";
- Name = "Group";
- ModuleName = "MdeDeviceTagging";
+ ModuleVersion = "1.0.1";
  ConfigurationName = "defenderdevicetagging";
 };
 instance of OMI_ConfigurationDocument
@@ -26,7 +26,7 @@ instance of OMI_ConfigurationDocument
 
                         Author="seanstark";
 
-                        GenerationDate="09/03/2026 06:40:20";
+                        GenerationDate="09/03/2026 10:08:32";
 
                         GenerationHost="LAPTOP-NLOC0RP2";
 

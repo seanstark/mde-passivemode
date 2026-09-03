@@ -1,0 +1,94 @@
+{
+  "mode": "Indexed",
+  "metadata": {
+    "category": "Tags",
+    "requiredProviders": [
+      "Microsoft.AwsConnector",
+      "Microsoft.HybridCompute",
+      "Microsoft.Resources"
+    ],
+    "version": "1.0.0"
+  },
+  "parameters": {
+    "syncMarkerValue": {
+      "type": "string",
+      "metadata": {
+        "displayName": "AWS tag synchronization generation",
+        "description": "Marker written to the AzurePolicy-AwsTagsImported tag. Change this value to force eligible Arc machines to import their current AWS tags again.",
+        "portalReview": "true"
+      },
+      "defaultValue": "1"
+    }
+  },
+  "policyRule": {
+    "if": {
+      "allOf": [
+        {
+          "field": "type",
+          "equals": "Microsoft.HybridCompute/machines"
+        },
+        {
+          "field": "Microsoft.HybridCompute/machines/cloudMetadata.provider",
+          "equals": "AWS"
+        }
+      ]
+    },
+    "then": {
+      "effect": "deployIfNotExists",
+      "details": {
+        "roleDefinitionIds": [
+          "/providers/Microsoft.Authorization/roleDefinitions/acdd72a7-3385-48ef-bd42-f606fba81ae7",
+          "/providers/Microsoft.Authorization/roleDefinitions/4a9ae827-6dc8-4573-8ac7-8239d42aa03f"
+        ],
+        "type": "Microsoft.HybridCompute/machines",
+        "name": "[field('name')]",
+        "existenceCondition": {
+          "field": "tags['AzurePolicy-AwsTagsImported']",
+          "equals": "[parameters('syncMarkerValue')]"
+        },
+        "deployment": {
+          "properties": {
+            "mode": "incremental",
+            "parameters": {
+              "machineId": {
+                "value": "[field('id')]"
+              },
+              "syncMarkerValue": {
+                "value": "[parameters('syncMarkerValue')]"
+              }
+            },
+            "template": {
+              "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+              "contentVersion": "1.0.0.0",
+              "parameters": {
+                "machineId": {
+                  "type": "string"
+                },
+                "syncMarkerValue": {
+                  "type": "string"
+                }
+              },
+              "variables": {
+                "awsEc2InstanceResourceId": "[concat(parameters('machineId'), '/providers/Microsoft.AwsConnector/ec2Instances/default')]",
+                "syncMarkerTags": {
+                  "AzurePolicy-AwsTagsImported": "[parameters('syncMarkerValue')]"
+                }
+              },
+              "resources": [
+                {
+                  "apiVersion": "2021-04-01",
+                  "type": "Microsoft.Resources/tags",
+                  "name": "default",
+                  "scope": "[parameters('machineId')]",
+                  "properties": {
+                    "tags": "[union(coalesce(tryGet(reference(parameters('machineId'), '2024-07-10', 'Full'), 'tags'), json('{}')), reference(variables('awsEc2InstanceResourceId'), '2024-12-01').awsTags, variables('syncMarkerTags'))]"
+                  }
+                }
+              ]
+            }
+          }
+        }
+      }
+    }
+  }
+}

@@ -12,11 +12,15 @@
       "type": 9,
       "content": {
         "version": "KqlParameterItem/1.0",
+        "crossComponentResources": [
+          "value::all"
+        ],
         "parameters": [
           {
             "id": "8a7694d3-c308-4b44-b748-b650f29f0c5d",
             "version": "KqlParameterItem/1.0",
             "name": "Workspace",
+            "label": "Log Analytics workspace",
             "type": 5,
             "isRequired": true,
             "query": "resources\n| where type == \"microsoft.operationalinsights/workspaces\"\n| project id",
@@ -29,8 +33,7 @@
             },
             "queryType": 1,
             "resourceType": "microsoft.resourcegraph/resources",
-            "label": "Log Analytics workspace",
-            "value": "/subscriptions/9ebcb583-7adb-44ea-b688-06f1de624cc1/resourceGroups/sentinel-prd/providers/Microsoft.OperationalInsights/workspaces/sentinel-prd"
+            "value": null
           },
           {
             "id": "f8268d55-54eb-4d95-acdf-73f79fb0cd63",
@@ -90,8 +93,8 @@
           }
         ],
         "style": "pills",
-        "queryType": 0,
-        "resourceType": "microsoft.operationalinsights/workspaces"
+        "queryType": 1,
+        "resourceType": "microsoft.resourcegraph/resources"
       },
       "name": "parameters"
     },
@@ -337,7 +340,7 @@
       "type": 3,
       "content": {
         "version": "KqlItem/1.0",
-        "query": "guestconfigurationresources\r\n| where name startswith \"DeviceTagging\"\r\n| extend vmid = properties.targetResourceId, policyAssignmentId = tostring(properties.policyAssignmentId), latestReportId = properties.latestReportId\r\n| extend intendedState = properties.guestConfiguration.configurationParameter[0].value\r\n| extend complianceStatus = properties.complianceStatus, lastComplianceStatusChecked = properties.lastComplianceStatusChecked\r\n| extend SubscriptionId = tostring(split(policyAssignmentId, '/')[2])\r\n| project vmid, lastComplianceStatusChecked, intendedState, complianceStatus, \r\nlatestReportId, SubscriptionId, policyAssignmentId\r\n",
+        "query": "guestconfigurationresources\r\n| where name startswith \"defenderdevicetagging\"\r\n| extend vmid = properties.targetResourceId, policyAssignmentId = tostring(properties.policyAssignmentId), latestReportId = properties.latestReportId\r\n| extend intendedState = properties.guestConfiguration.configurationParameter[0].value\r\n| extend complianceStatus = properties.complianceStatus, lastComplianceStatusChecked = properties.lastComplianceStatusChecked\r\n| extend SubscriptionId = tostring(split(policyAssignmentId, '/')[2])\r\n| project vmid, lastComplianceStatusChecked, intendedState, complianceStatus, \r\nlatestReportId, SubscriptionId, policyAssignmentId\r\n",
         "size": 1,
         "showAnalytics": true,
         "showRefreshButton": true,
@@ -531,74 +534,6 @@
       "name": "current-values"
     },
     {
-      "type": 3,
-      "content": {
-        "version": "KqlItem/1.0",
-        "query": "let ComputerInventory = materialize(\n    ConfigurationChange\n    | where isnotempty(Computer)\n    | where \"*\" in ({ComputerFilter}) or Computer in ({ComputerFilter})\n    | extend JoinVMUUID = tostring(VMUUID)\n    | where isnotempty(JoinVMUUID)\n    | summarize arg_max(TimeGenerated, _ResourceId, Computer) by JoinVMUUID\n    | project JoinVMUUID, ConfigComputer = Computer, InventoryObserved = TimeGenerated, InventoryResourceId = _ResourceId\n);\nlet LatestSetting = materialize(\n    ConfigurationChange\n    | where ValueName == \"DeviceTagging\"\n    | where \"*\" in ({ComputerFilter}) or Computer in ({ComputerFilter})\n    | extend JoinVMUUID = tostring(VMUUID)\n    | where isnotempty(JoinVMUUID)\n    | summarize arg_max(TimeGenerated, *) by JoinVMUUID\n    | project JoinVMUUID, SettingObserved = TimeGenerated, SettingResourceId = _ResourceId, ValueData, ValueName, ValueType, ChangeCategory\n);\nlet LatestHeartbeat = materialize(\n    Heartbeat\n    | extend JoinVMUUID = tostring(VMUUID)\n    | where isnotempty(JoinVMUUID)\n    | summarize arg_max(TimeGenerated, OSName, Computer, ComputerPrivateIPs) by JoinVMUUID\n    | project JoinVMUUID, HeartbeatComputer = Computer, OSName, ComputerPrivateIPs = tostring(ComputerPrivateIPs)\n);\nComputerInventory\n| join kind=leftouter LatestSetting on JoinVMUUID\n| extend LastObserved = coalesce(SettingObserved, InventoryObserved),\n         Resource = coalesce(SettingResourceId, InventoryResourceId),\n         ValueName = coalesce(ValueName, \"DeviceTagging\"),\n         State = case(isnull(SettingObserved), \"Does not exist\", ChangeCategory =~ \"Removed\", \"Does not exist\", \"Present\"),\n         CurrentValue = case(isnull(SettingObserved) or ChangeCategory =~ \"Removed\", \"<does not exist>\", isempty(tostring(ValueData)), \"<empty>\", tostring(ValueData)),\n         LastAction = case(isnull(SettingObserved), \"Not observed\", isempty(ChangeCategory), \"Snapshot\", ChangeCategory)\n| extend ModeFilter = iff(State == \"Present\" and trim(\" \", CurrentValue) == \"1\", \"Passive\", \"Active\")\n| where \"{RegistryActivityFilter}\" == \"*\" or LastAction == \"{RegistryActivityFilter}\"\n| where \"{DefenderModeFilter}\" == \"*\" or ModeFilter == \"{DefenderModeFilter}\"\n| join kind=leftouter LatestHeartbeat on JoinVMUUID\n| extend Computer = coalesce(HeartbeatComputer, ConfigComputer)\n| project LastObserved, Resource, ValueName, CurrentValue, State, LastAction, OSName, ['Computer Name'] = Computer, ComputerPrivateIPs\n| order by LastObserved desc",
-        "size": 0,
-        "showAnalytics": true,
-        "title": "Latest observed registry values",
-        "timeContextFromParameter": "TimeRange",
-        "showRefreshButton": true,
-        "exportFieldName": "Resource",
-        "exportParameterName": "SelectedResource",
-        "exportDefaultValue": "*",
-        "showExportToExcel": true,
-        "queryType": 0,
-        "resourceType": "microsoft.operationalinsights/workspaces",
-        "crossComponentResources": [
-          "{Workspace}"
-        ],
-        "visualization": "table",
-        "gridSettings": {
-          "formatters": [
-            {
-              "columnMatch": "Resource",
-              "formatter": 13,
-              "formatOptions": {
-                "linkTarget": "Resource",
-                "linkIsContextBlade": true,
-                "showIcon": true
-              }
-            }
-          ],
-          "filter": true,
-          "sortBy": [
-            {
-              "itemKey": "LastObserved",
-              "sortOrder": 2
-            }
-          ],
-          "labelSettings": [
-            {
-              "columnId": "LastObserved",
-              "label": "Last observed"
-            },
-            {
-              "columnId": "CurrentValue",
-              "label": "Current value"
-            },
-            {
-              "columnId": "LastAction",
-              "label": "Last action"
-            }
-          ]
-        },
-        "sortBy": [
-          {
-            "itemKey": "LastObserved",
-            "sortOrder": 2
-          }
-        ]
-      },
-      "conditionalVisibility": {
-        "parameterName": "tab",
-        "comparison": "isEqualTo",
-        "value": "devicetags"
-      },
-      "name": "current-values - Copy"
-    },
-    {
       "type": 1,
       "content": {
         "json": "## Change History From Change Tracking"
@@ -674,7 +609,75 @@
       "type": 3,
       "content": {
         "version": "KqlItem/1.0",
-        "query": "let LatestHeartbeat = materialize(\n    Heartbeat\n    | extend JoinVMUUID = tostring(VMUUID)\n    | where isnotempty(JoinVMUUID)\n    | summarize arg_max(TimeGenerated, OSName, Computer, ComputerPrivateIPs) by JoinVMUUID\n    | project JoinVMUUID, HeartbeatComputer = Computer, OSName, ComputerPrivateIPs = tostring(ComputerPrivateIPs)\n);\nConfigurationChange\n| where ConfigChangeType =~ \"Registry\"\n| where ChangeCategory in~ (\"Added\", \"Modified\", \"Removed\")\n| where ValueName == \"DeviceTagging\"\n| where \"*\" in ({ComputerFilter}) or Computer in ({ComputerFilter})\n| where \"{SelectedResource}\" == \"*\" or _ResourceId =~ \"{SelectedResource}\"\n| extend ConfigComputer = Computer, JoinVMUUID = tostring(VMUUID)\n| extend PreviousValue = iff(isempty(tostring(PreviousValueData)), \"<empty>\", tostring(PreviousValueData))\n| extend NewValue = iff(ChangeCategory =~ \"Removed\", \"<removed>\", iff(isempty(tostring(ValueData)), \"<empty>\", tostring(ValueData)))\n| extend ModeFilter = iff(ChangeCategory !~ \"Removed\" and trim(\" \", tostring(ValueData)) == \"1\", \"Passive\", \"Active\")\n| where \"{RegistryActivityFilter}\" == \"*\" or ChangeCategory == \"{RegistryActivityFilter}\"\n| where \"{DefenderModeFilter}\" == \"*\" or ModeFilter == \"{DefenderModeFilter}\"\n| join kind=leftouter LatestHeartbeat on JoinVMUUID\n| extend Computer = coalesce(HeartbeatComputer, ConfigComputer)\n| project TimeGenerated, Resource = _ResourceId, ValueName, NewValue, PreviousValue, Action = ChangeCategory, OSName, ['Computer Name'] = Computer, ComputerPrivateIPs, Hive, RegistryKey, ValueType, FieldsChanged\n| order by TimeGenerated desc",
+        "query": "let ComputerInventory = materialize(\n    ConfigurationChange\n    | where isnotempty(Computer)\n    | where \"*\" in ({ComputerFilter}) or Computer in ({ComputerFilter})\n    | extend JoinVMUUID = tostring(VMUUID)\n    | where isnotempty(JoinVMUUID)\n    | summarize arg_max(TimeGenerated, _ResourceId, Computer) by JoinVMUUID\n    | project JoinVMUUID, ConfigComputer = Computer, InventoryObserved = TimeGenerated, InventoryResourceId = _ResourceId\n);\nlet LatestSetting = materialize(\n    ConfigurationChange\n    | where ValueName == \"Group\"\n    | where \"*\" in ({ComputerFilter}) or Computer in ({ComputerFilter})\n    | extend JoinVMUUID = tostring(VMUUID)\n    | where isnotempty(JoinVMUUID)\n    | summarize arg_max(TimeGenerated, *) by JoinVMUUID\n    | project JoinVMUUID, SettingObserved = TimeGenerated, SettingResourceId = _ResourceId, ValueData, ValueName, ValueType, ChangeCategory\n);\nlet LatestHeartbeat = materialize(\n    Heartbeat\n    | extend JoinVMUUID = tostring(VMUUID)\n    | where isnotempty(JoinVMUUID)\n    | summarize arg_max(TimeGenerated, OSName, Computer, ComputerPrivateIPs) by JoinVMUUID\n    | project JoinVMUUID, HeartbeatComputer = Computer, OSName, ComputerPrivateIPs = tostring(ComputerPrivateIPs)\n);\nComputerInventory\n| join kind=leftouter LatestSetting on JoinVMUUID\n| extend LastObserved = coalesce(SettingObserved, InventoryObserved),\n         Resource = coalesce(SettingResourceId, InventoryResourceId),\n         ValueName = coalesce(ValueName, \"Group\"),\n         State = case(isnull(SettingObserved), \"Does not exist\", ChangeCategory =~ \"Removed\", \"Does not exist\", \"Present\"),\n         CurrentValue = case(isnull(SettingObserved) or ChangeCategory =~ \"Removed\", \"<does not exist>\", isempty(tostring(ValueData)), \"<empty>\", tostring(ValueData)),\n         LastAction = case(isnull(SettingObserved), \"Not observed\", isempty(ChangeCategory), \"Snapshot\", ChangeCategory)\n| extend ModeFilter = iff(State == \"Present\" and trim(\" \", CurrentValue) == \"1\", \"Passive\", \"Active\")\n| where \"{RegistryActivityFilter}\" == \"*\" or LastAction == \"{RegistryActivityFilter}\"\n| where \"{DefenderModeFilter}\" == \"*\" or ModeFilter == \"{DefenderModeFilter}\"\n| join kind=leftouter LatestHeartbeat on JoinVMUUID\n| extend Computer = coalesce(HeartbeatComputer, ConfigComputer)\n| project LastObserved, Resource, ValueName, CurrentValue, State, LastAction, OSName, ['Computer Name'] = Computer, ComputerPrivateIPs\n| order by LastObserved desc",
+        "size": 0,
+        "showAnalytics": true,
+        "title": "Latest observed registry values",
+        "timeContextFromParameter": "TimeRange",
+        "showRefreshButton": true,
+        "exportFieldName": "Resource",
+        "exportParameterName": "SelectedResource",
+        "exportDefaultValue": "*",
+        "showExportToExcel": true,
+        "queryType": 0,
+        "resourceType": "microsoft.operationalinsights/workspaces",
+        "crossComponentResources": [
+          "{Workspace}"
+        ],
+        "visualization": "table",
+        "gridSettings": {
+          "formatters": [
+            {
+              "columnMatch": "Resource",
+              "formatter": 13,
+              "formatOptions": {
+                "linkTarget": "Resource",
+                "linkIsContextBlade": true,
+                "showIcon": true
+              }
+            }
+          ],
+          "filter": true,
+          "sortBy": [
+            {
+              "itemKey": "LastObserved",
+              "sortOrder": 2
+            }
+          ],
+          "labelSettings": [
+            {
+              "columnId": "LastObserved",
+              "label": "Last observed"
+            },
+            {
+              "columnId": "CurrentValue",
+              "label": "Current value"
+            },
+            {
+              "columnId": "LastAction",
+              "label": "Last action"
+            }
+          ]
+        },
+        "sortBy": [
+          {
+            "itemKey": "LastObserved",
+            "sortOrder": 2
+          }
+        ]
+      },
+      "conditionalVisibility": {
+        "parameterName": "tab",
+        "comparison": "isEqualTo",
+        "value": "devicetags"
+      },
+      "name": "current-values - Copy"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "let LatestHeartbeat = materialize(\n    Heartbeat\n    | extend JoinVMUUID = tostring(VMUUID)\n    | where isnotempty(JoinVMUUID)\n    | summarize arg_max(TimeGenerated, OSName, Computer, ComputerPrivateIPs) by JoinVMUUID\n    | project JoinVMUUID, HeartbeatComputer = Computer, OSName, ComputerPrivateIPs = tostring(ComputerPrivateIPs)\n);\nConfigurationChange\n| where ConfigChangeType =~ \"Registry\"\n| where ChangeCategory in~ (\"Added\", \"Modified\", \"Removed\")\n| where ValueName == \"Group\"\n| where \"*\" in ({ComputerFilter}) or Computer in ({ComputerFilter})\n| where \"{SelectedResource}\" == \"*\" or _ResourceId =~ \"{SelectedResource}\"\n| extend ConfigComputer = Computer, JoinVMUUID = tostring(VMUUID)\n| extend PreviousValue = iff(isempty(tostring(PreviousValueData)), \"<empty>\", tostring(PreviousValueData))\n| extend NewValue = iff(ChangeCategory =~ \"Removed\", \"<removed>\", iff(isempty(tostring(ValueData)), \"<empty>\", tostring(ValueData)))\n| extend ModeFilter = iff(ChangeCategory !~ \"Removed\" and trim(\" \", tostring(ValueData)) == \"1\", \"Passive\", \"Active\")\n| where \"{RegistryActivityFilter}\" == \"*\" or ChangeCategory == \"{RegistryActivityFilter}\"\n| where \"{DefenderModeFilter}\" == \"*\" or ModeFilter == \"{DefenderModeFilter}\"\n| join kind=leftouter LatestHeartbeat on JoinVMUUID\n| extend Computer = coalesce(HeartbeatComputer, ConfigComputer)\n| project TimeGenerated, Resource = _ResourceId, ValueName, NewValue, PreviousValue, Action = ChangeCategory, OSName, ['Computer Name'] = Computer, ComputerPrivateIPs, Hive, RegistryKey, ValueType, FieldsChanged\n| order by TimeGenerated desc",
         "size": 0,
         "showAnalytics": true,
         "title": "Registry change audit trail",
@@ -747,7 +750,7 @@
       "content": {
         "version": "KqlItem/1.0",
         "query": "ConfigurationChange\n| where ConfigChangeType =~ \"Registry\"\n| where ChangeCategory in~ (\"Added\", \"Modified\", \"Removed\")\n| where ValueName == \"ForceDefenderPassiveMode\"\n| where \"*\" in ({ComputerFilter}) or Computer in ({ComputerFilter})\n| summarize Changes = count() by bin(TimeGenerated, 1h), ChangeCategory\n| order by TimeGenerated asc",
-        "size": 0,
+        "size": 1,
         "showAnalytics": true,
         "title": "ForceDefenderPassiveMode changes over time",
         "timeContextFromParameter": "TimeRange",
@@ -758,12 +761,13 @@
         "crossComponentResources": [
           "{Workspace}"
         ],
-        "visualization": "timechart",
+        "visualization": "barchart",
         "chartSettings": {
           "xAxis": "TimeGenerated",
           "yAxis": [
             "Changes"
           ],
+          "showLegend": true,
           "seriesLabelSettings": [
             {
               "seriesName": "Added",
@@ -785,11 +789,58 @@
         "comparison": "isEqualTo",
         "value": "passivemode"
       },
+      "customWidth": "50",
       "name": "changes-over-time"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "ConfigurationChange\n| where ConfigChangeType =~ \"Registry\"\n| where ChangeCategory in~ (\"Added\", \"Modified\", \"Removed\")\n| where ValueName == \"Group\"\n| where \"*\" in ({ComputerFilter}) or Computer in ({ComputerFilter})\n| summarize Changes = count() by bin(TimeGenerated, 1h), ChangeCategory\n| order by TimeGenerated asc",
+        "size": 1,
+        "showAnalytics": true,
+        "title": "DeviceTagging changes over time",
+        "timeContextFromParameter": "TimeRange",
+        "showRefreshButton": true,
+        "showExportToExcel": true,
+        "queryType": 0,
+        "resourceType": "microsoft.operationalinsights/workspaces",
+        "crossComponentResources": [
+          "{Workspace}"
+        ],
+        "visualization": "barchart",
+        "chartSettings": {
+          "xAxis": "TimeGenerated",
+          "yAxis": [
+            "Changes"
+          ],
+          "showLegend": true,
+          "seriesLabelSettings": [
+            {
+              "seriesName": "Added",
+              "color": "green"
+            },
+            {
+              "seriesName": "Modified",
+              "color": "blue"
+            },
+            {
+              "seriesName": "Removed",
+              "color": "red"
+            }
+          ]
+        }
+      },
+      "conditionalVisibility": {
+        "parameterName": "tab",
+        "comparison": "isEqualTo",
+        "value": "passivemode"
+      },
+      "customWidth": "50",
+      "name": "changes-over-time - Copy"
     }
   ],
   "fallbackResourceIds": [
-    "/subscriptions/9ebcb583-7adb-44ea-b688-06f1de624cc1/resourcegroups/sentinel-prd/providers/microsoft.operationalinsights/workspaces/sentinel-prd"
   ],
   "fromTemplateId": "sentinel-RegistryChangeMonitor",
   "$schema": "https://github.com/Microsoft/Application-Insights-Workbooks/blob/master/schema/workbook.json"
