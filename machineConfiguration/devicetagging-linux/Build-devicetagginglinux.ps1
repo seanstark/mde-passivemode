@@ -26,6 +26,7 @@ if ($IsWindows -and
 }
 
 $configurationName = 'devicetagginglinux'
+$policyVersion = '1.0.1'
 $configurationPath = Join-Path $PSScriptRoot 'devicetagginglinux.ps1'
 $modulePath = Join-Path $PSScriptRoot 'Modules'
 $compiledPath = Join-Path $OutputPath 'compiled'
@@ -108,7 +109,7 @@ $policyParameter = @(
 $commonPolicyParameters = @{
     ContentUri    = $PolicySkeletonUri.AbsoluteUri
     Platform      = 'Linux'
-    PolicyVersion = '1.0.0'
+    PolicyVersion = $policyVersion
     Parameter     = $policyParameter
 }
 
@@ -164,6 +165,8 @@ foreach ($generatedPolicy in $generatedPolicies) {
     $policy = Update-PolicyValue -Value $policy
     $properties = $policy.properties
 
+    $properties.metadata | Add-Member -NotePropertyName version -NotePropertyValue $policyVersion -Force
+    $properties.metadata.guestConfiguration | Add-Member -NotePropertyName version -NotePropertyValue $policyVersion -Force
     $properties.metadata.guestConfiguration.contentUri = $ContentUri.AbsoluteUri
     $properties.metadata.guestConfiguration.contentHash = $packageHash
 
@@ -217,6 +220,10 @@ foreach ($generatedPolicy in $generatedPolicies) {
     }
     foreach ($resource in @($properties.policyRule.then.details.deployment.properties.template.resources)) {
         $guestConfiguration = $resource.properties.guestConfiguration
+        if (-not $guestConfiguration) {
+            continue
+        }
+        $guestConfiguration | Add-Member -NotePropertyName version -NotePropertyValue $policyVersion -Force
         if ($guestConfiguration.configurationParameter) {
             $guestConfiguration.configurationParameter = @($guestConfiguration.configurationParameter)
         }

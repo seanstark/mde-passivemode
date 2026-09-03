@@ -1,19 +1,19 @@
 /*
 @TargetNode='localhost'
 @GeneratedBy=seanstark
-@GenerationDate=09/02/2026 14:03:18
+@GenerationDate=09/03/2026 06:12:11
 @GenerationHost=LAPTOP-NLOC0RP2
 */
 
 instance of MdeLinuxDeviceTagging as $MdeLinuxDeviceTagging1ref
 {
-SourceInfo = "C:\\repos\\defenderforservers-tools\\machineConfiguration\\devicetagging-linux\\devicetagginglinux.ps1::5::9::MdeLinuxDeviceTagging";
- DeviceTag = "DefaultDeviceTag";
+DeviceTag = "DefaultDeviceTag";
  ModuleName = "MdeLinuxDeviceTagging";
- ResourceID = "[MdeLinuxDeviceTagging]devicetagginglinux";
  Name = "mdatp_managed.json";
- FileMode = "Merge";
- ModuleVersion = "1.0.0";
+ ResourceID = "[MdeLinuxDeviceTagging]devicetagginglinux";
+ SourceInfo = "C:\\repos\\defenderforservers-tools\\machineConfiguration\\devicetagging-linux\\devicetagginglinux.ps1::5::9::MdeLinuxDeviceTagging";
+ ModuleVersion = "1.0.1";
+ FileMode = "Merge";
  ConfigurationName = "devicetagginglinux";
 };
 instance of OMI_ConfigurationDocument
@@ -27,7 +27,7 @@ instance of OMI_ConfigurationDocument
 
                         Author="seanstark";
 
-                        GenerationDate="09/02/2026 14:03:18";
+                        GenerationDate="09/03/2026 06:12:11";
 
                         GenerationHost="LAPTOP-NLOC0RP2";
 

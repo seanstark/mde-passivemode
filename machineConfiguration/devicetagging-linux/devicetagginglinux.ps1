@@ -1,5 +1,5 @@
 Configuration devicetagginglinux {
-    Import-DscResource -ModuleName MdeLinuxDeviceTagging -ModuleVersion '1.0.0'
+    Import-DscResource -ModuleName MdeLinuxDeviceTagging -ModuleVersion '1.0.1'
 
     Node localhost {
         MdeLinuxDeviceTagging devicetagginglinux {

@@ -1,6 +1,14 @@
+[ClassVersion("1.0.0.0")]
+class Reason
+{
+    [Read] string Code;
+    [Read] string Phrase;
+};
+
 [ClassVersion("1.0.0.0"), FriendlyName("MdeDeviceTagging")]
 class MdeDeviceTagging : OMI_BaseResource
 {
     [Key] string Name;
     [Required] string DeviceTag;
+    [Read, EmbeddedInstance("Reason")] string Reasons[];
 };

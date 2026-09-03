@@ -1,7 +1,0 @@
-[ClassVersion("1.0.0.0"), FriendlyName("MdeLinuxDeviceTagging")]
-class MdeLinuxDeviceTagging : OMI_BaseResource
-{
-    [Key] string Name;
-    [Required] string DeviceTag;
-    [Required, ValueMap{"Merge", "Overwrite"}, Values{"Merge", "Overwrite"}] string FileMode;
-};

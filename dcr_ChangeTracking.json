@@ -39,13 +39,22 @@
                                     "registryCollectionFrequency": 3000,
                                     "registryInfo": [
                                         {
-                                            "name": "Registry_5",
+                                            "name": "ForceDefenderPassiveMode",
                                             "groupTag": "Defender",
                                             "enabled": true,
                                             "recurse": false,
                                             "description": "",
                                             "keyName": "HKEY_LOCAL_MACHINE\\SOFTWARE\\Policies\\Microsoft\\Windows Advanced Threat Protection",
                                             "valueName": "ForceDefenderPassiveMode"
+                                        },
+                                        {
+                                            "name": "DeviceTagging",
+                                            "groupTag": "Defender",
+                                            "enabled": true,
+                                            "recurse": false,
+                                            "description": "",
+                                            "keyName": "HKEY_LOCAL_MACHINE\\SOFTWARE\\Policies\\Microsoft\\Windows Advanced Threat Protection\\DeviceTagging",
+                                            "valueName": ""
                                         }
                                     ]
                                 },
@@ -72,11 +81,11 @@
                             ],
                             "extensionName": "ChangeTracking-Linux",
                             "extensionSettings": {
-                                "enableFiles": true,
-                                "enableSoftware": true,
+                                "enableFiles": false,
+                                "enableSoftware": false,
                                 "enableRegistry": false,
                                 "enableServices": false,
-                                "enableInventory": true,
+                                "enableInventory": false,
                                 "fileSettings": {
                                     "fileCollectionFrequency": 900,
                                     "fileInfo": null

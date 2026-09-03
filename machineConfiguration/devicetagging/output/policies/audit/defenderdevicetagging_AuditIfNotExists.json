@@ -1,0 +1,329 @@
+{
+  "properties": {
+    "displayName": "Audit Microsoft Defender for Endpoint device tagging on Windows machines",
+    "policyType": "Custom",
+    "mode": "Indexed",
+    "description": "Audits the Group device tag registry value by using Azure Machine Configuration.",
+    "metadata": {
+      "category": "Guest Configuration",
+      "version": "1.0.2",
+      "requiredProviders": [
+        "Microsoft.GuestConfiguration"
+      ],
+      "guestConfiguration": {
+        "name": "defenderdevicetagging",
+        "contentType": "Custom",
+        "contentUri": "https://github.com/seanstark/defenderforservers-tools/raw/refs/heads/main/machineConfiguration/devicetagging/output/defenderdevicetagging.zip",
+        "contentHash": "5059A818A3AC2945041EBB4FCE990A2EB5CDDF12EBF58DAA81532ED4FF1D9D7A",
+        "configurationParameter": {
+          "DeviceTag": "[MdeDeviceTagging]defenderdevicetagging;DeviceTag"
+        },
+        "version": "1.0.2"
+      }
+    },
+    "parameters": {
+      "IncludeArcMachines": {
+        "type": "string",
+        "metadata": {
+          "displayName": "Include Arc connected machines",
+          "description": "By selecting this option, you agree to be charged monthly per Arc connected machine.",
+          "portalReview": "true"
+        },
+        "allowedValues": [
+          "true",
+          "false"
+        ],
+        "defaultValue": "false"
+      },
+      "DeviceTag": {
+        "type": "string",
+        "metadata": {
+          "displayName": "Microsoft Defender for Endpoint device tag",
+          "description": "Value written to the Group registry value. The value must contain no more than 200 characters."
+        },
+        "defaultValue": "DefaultDeviceTag"
+      },
+      "tagName": {
+        "type": "string",
+        "metadata": {
+          "displayName": "Optional Azure tag name",
+          "description": "Name of the Azure resource tag used to filter machines. Leave blank to include all eligible Windows machines."
+        },
+        "defaultValue": ""
+      },
+      "tagValue": {
+        "type": "string",
+        "metadata": {
+          "displayName": "Optional Azure tag value",
+          "description": "Required value for the Azure resource tag. Used only when a tag name is provided."
+        },
+        "defaultValue": ""
+      }
+    },
+    "policyRule": {
+      "if": {
+        "allOf": [
+          {
+            "value": "[length(parameters('DeviceTag'))]",
+            "lessOrEquals": 200
+          },
+          {
+            "anyOf": [
+              {
+                "allOf": [
+                  {
+                    "anyOf": [
+                      {
+                        "field": "type",
+                        "equals": "Microsoft.Compute/virtualMachines"
+                      },
+                      {
+                        "field": "type",
+                        "equals": "Microsoft.Compute/virtualMachineScaleSets"
+                      }
+                    ]
+                  },
+                  {
+                    "field": "tags['aks-managed-orchestrator']",
+                    "exists": "false"
+                  },
+                  {
+                    "field": "tags['aks-managed-poolName']",
+                    "exists": "false"
+                  },
+                  {
+                    "anyOf": [
+                      {
+                        "field": "Microsoft.Compute/imagePublisher",
+                        "in": [
+                          "esri",
+                          "incredibuild",
+                          "MicrosoftDynamicsAX",
+                          "MicrosoftSharepoint",
+                          "MicrosoftVisualStudio",
+                          "MicrosoftWindowsDesktop",
+                          "MicrosoftWindowsServerHPCPack"
+                        ]
+                      },
+                      {
+                        "allOf": [
+                          {
+                            "field": "Microsoft.Compute/imagePublisher",
+                            "equals": "MicrosoftWindowsServer"
+                          },
+                          {
+                            "field": "Microsoft.Compute/imageSKU",
+                            "notLike": "2008*"
+                          }
+                        ]
+                      },
+                      {
+                        "allOf": [
+                          {
+                            "field": "Microsoft.Compute/imagePublisher",
+                            "equals": "MicrosoftSQLServer"
+                          },
+                          {
+                            "field": "Microsoft.Compute/imageOffer",
+                            "notLike": "SQL2008*"
+                          }
+                        ]
+                      },
+                      {
+                        "allOf": [
+                          {
+                            "field": "Microsoft.Compute/imagePublisher",
+                            "equals": "microsoft-dsvm"
+                          },
+                          {
+                            "field": "Microsoft.Compute/imageOffer",
+                            "like": "dsvm-win*"
+                          }
+                        ]
+                      },
+                      {
+                        "allOf": [
+                          {
+                            "field": "Microsoft.Compute/imagePublisher",
+                            "equals": "microsoft-ads"
+                          },
+                          {
+                            "field": "Microsoft.Compute/imageOffer",
+                            "in": [
+                              "standard-data-science-vm",
+                              "windows-data-science-vm"
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "allOf": [
+                          {
+                            "field": "Microsoft.Compute/imagePublisher",
+                            "equals": "batch"
+                          },
+                          {
+                            "field": "Microsoft.Compute/imageOffer",
+                            "equals": "rendering-windows2016"
+                          }
+                        ]
+                      },
+                      {
+                        "allOf": [
+                          {
+                            "field": "Microsoft.Compute/imagePublisher",
+                            "equals": "center-for-internet-security-inc"
+                          },
+                          {
+                            "field": "Microsoft.Compute/imageOffer",
+                            "like": "cis-windows-server-201*"
+                          }
+                        ]
+                      },
+                      {
+                        "allOf": [
+                          {
+                            "field": "Microsoft.Compute/imagePublisher",
+                            "equals": "pivotal"
+                          },
+                          {
+                            "field": "Microsoft.Compute/imageOffer",
+                            "like": "bosh-windows-server*"
+                          }
+                        ]
+                      },
+                      {
+                        "allOf": [
+                          {
+                            "field": "Microsoft.Compute/imagePublisher",
+                            "equals": "cloud-infrastructure-services"
+                          },
+                          {
+                            "field": "Microsoft.Compute/imageOffer",
+                            "like": "ad*"
+                          }
+                        ]
+                      },
+                      {
+                        "allOf": [
+                          {
+                            "anyOf": [
+                              {
+                                "field": "Microsoft.Compute/virtualMachines/osProfile.windowsConfiguration",
+                                "exists": true
+                              },
+                              {
+                                "field": "Microsoft.Compute/virtualMachines/storageProfile.osDisk.osType",
+                                "like": "Windows*"
+                              },
+                              {
+                                "field": "Microsoft.Compute/VirtualMachineScaleSets/osProfile.windowsConfiguration",
+                                "exists": true
+                              },
+                              {
+                                "field": "Microsoft.Compute/virtualMachineScaleSets/virtualMachineProfile.storageProfile.osDisk.osType",
+                                "like": "Windows*"
+                              }
+                            ]
+                          },
+                          {
+                            "anyOf": [
+                              {
+                                "field": "Microsoft.Compute/imageSKU",
+                                "exists": false
+                              },
+                              {
+                                "allOf": [
+                                  {
+                                    "field": "Microsoft.Compute/imageOffer",
+                                    "notLike": "SQL2008*"
+                                  },
+                                  {
+                                    "field": "Microsoft.Compute/imageSKU",
+                                    "notLike": "2008*"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "value": "[parameters('IncludeArcMachines')]",
+                    "equals": "true"
+                  },
+                  {
+                    "anyOf": [
+                      {
+                        "allOf": [
+                          {
+                            "field": "type",
+                            "equals": "Microsoft.HybridCompute/machines"
+                          },
+                          {
+                            "field": "Microsoft.HybridCompute/imageOffer",
+                            "like": "windows*"
+                          }
+                        ]
+                      },
+                      {
+                        "allOf": [
+                          {
+                            "field": "type",
+                            "equals": "Microsoft.ConnectedVMwarevSphere/virtualMachines"
+                          },
+                          {
+                            "field": "Microsoft.ConnectedVMwarevSphere/virtualMachines/osProfile.osType",
+                            "like": "windows*"
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "anyOf": [
+              {
+                "value": "[empty(parameters('tagName'))]",
+                "equals": true
+              },
+              {
+                "field": "[concat('tags[', parameters('tagName'), ']')]",
+                "equals": "[parameters('tagValue')]"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "effect": "auditIfNotExists",
+        "details": {
+          "type": "Microsoft.GuestConfiguration/guestConfigurationAssignments",
+          "name": "[concat('defenderdevicetagging$pid', uniqueString(policy().assignmentId, policy().definitionReferenceId))]",
+          "existenceCondition": {
+            "allOf": [
+              {
+                "field": "Microsoft.GuestConfiguration/guestConfigurationAssignments/complianceStatus",
+                "equals": "Compliant"
+              },
+              {
+                "field": "Microsoft.GuestConfiguration/guestConfigurationAssignments/parameterHash",
+                "equals": "[base64(concat('[MdeDeviceTagging]defenderdevicetagging;DeviceTag', '=', parameters('DeviceTag')))]"
+              }
+            ]
+          }
+        }
+      }
+    }
+  },
+  "name": "ff037a13-f60c-41c5-943f-1345f4f7c06b"
+}

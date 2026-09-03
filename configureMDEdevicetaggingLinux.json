@@ -2,23 +2,23 @@
   "mode": "Indexed",
   "metadata": {
     "category": "Guest Configuration",
-    "version": "1.0.0",
     "requiredProviders": [
       "Microsoft.GuestConfiguration"
     ],
     "guestConfiguration": {
       "name": "devicetagginglinux",
-      "version": "1.0.0",
       "contentType": "Custom",
       "contentUri": "https://github.com/seanstark/defenderforservers-tools/raw/refs/heads/main/machineConfiguration/devicetagging-linux/output/devicetagginglinux.zip",
-      "contentHash": "790435F16A98E676D5D2F604084BDA89AF6712B0632CE319EAC0B12A831728DE",
+      "contentHash": "1E6FBF2069A333FAB909E480E5060FCE7ED2BF57474C401467FDAF59DA7BF578",
       "configurationParameter": {
         "DeviceTag": "[MdeLinuxDeviceTagging]devicetagginglinux;DeviceTag",
         "FileMode": "[MdeLinuxDeviceTagging]devicetagginglinux;FileMode"
       },
       "enableAutoRemediation": "[parameters('EnableAutoRemediation')]",
-      "autoRemediationAssignmentType": "ApplyAndAutoCorrect"
-    }
+      "autoRemediationAssignmentType": "ApplyAndAutoCorrect",
+      "version": "1.0.1"
+    },
+    "version": "1.0.1"
   },
   "parameters": {
     "IncludeArcMachines": {
@@ -430,10 +430,9 @@
                   "properties": {
                     "guestConfiguration": {
                       "name": "devicetagginglinux",
-                      "version": "1.0.0",
                       "contentType": "Custom",
                       "contentUri": "https://github.com/seanstark/defenderforservers-tools/raw/refs/heads/main/machineConfiguration/devicetagging-linux/output/devicetagginglinux.zip",
-                      "contentHash": "790435F16A98E676D5D2F604084BDA89AF6712B0632CE319EAC0B12A831728DE",
+                      "contentHash": "1E6FBF2069A333FAB909E480E5060FCE7ED2BF57474C401467FDAF59DA7BF578",
                       "assignmentType": "ApplyAndAutoCorrect",
                       "configurationParameter": [
                         {
@@ -444,7 +443,8 @@
                           "name": "[MdeLinuxDeviceTagging]devicetagginglinux;FileMode",
                           "value": "[parameters('FileMode')]"
                         }
-                      ]
+                      ],
+                      "version": "1.0.1"
                     }
                   }
                 },
@@ -457,10 +457,9 @@
                   "properties": {
                     "guestConfiguration": {
                       "name": "devicetagginglinux",
-                      "version": "1.0.0",
                       "contentType": "Custom",
                       "contentUri": "https://github.com/seanstark/defenderforservers-tools/raw/refs/heads/main/machineConfiguration/devicetagging-linux/output/devicetagginglinux.zip",
-                      "contentHash": "790435F16A98E676D5D2F604084BDA89AF6712B0632CE319EAC0B12A831728DE",
+                      "contentHash": "1E6FBF2069A333FAB909E480E5060FCE7ED2BF57474C401467FDAF59DA7BF578",
                       "assignmentType": "ApplyAndAutoCorrect",
                       "configurationParameter": [
                         {
@@ -471,7 +470,8 @@
                           "name": "[MdeLinuxDeviceTagging]devicetagginglinux;FileMode",
                           "value": "[parameters('FileMode')]"
                         }
-                      ]
+                      ],
+                      "version": "1.0.1"
                     }
                   }
                 },
@@ -484,10 +484,9 @@
                   "properties": {
                     "guestConfiguration": {
                       "name": "devicetagginglinux",
-                      "version": "1.0.0",
                       "contentType": "Custom",
                       "contentUri": "https://github.com/seanstark/defenderforservers-tools/raw/refs/heads/main/machineConfiguration/devicetagging-linux/output/devicetagginglinux.zip",
-                      "contentHash": "790435F16A98E676D5D2F604084BDA89AF6712B0632CE319EAC0B12A831728DE",
+                      "contentHash": "1E6FBF2069A333FAB909E480E5060FCE7ED2BF57474C401467FDAF59DA7BF578",
                       "assignmentType": "ApplyAndAutoCorrect",
                       "configurationParameter": [
                         {
@@ -498,7 +497,8 @@
                           "name": "[MdeLinuxDeviceTagging]devicetagginglinux;FileMode",
                           "value": "[parameters('FileMode')]"
                         }
-                      ]
+                      ],
+                      "version": "1.0.1"
                     }
                   }
                 }

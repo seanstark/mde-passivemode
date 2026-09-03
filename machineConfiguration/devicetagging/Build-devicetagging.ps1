@@ -25,9 +25,9 @@ if ($IsWindows -and
     throw 'Windows DSC configuration compilation requires an x64 PowerShell 7 process.'
 }
 
-$configurationName = 'devicetagging'
-$packageVersion = '1.0.1'
-$configurationPath = Join-Path $PSScriptRoot 'devicetagging.ps1'
+$configurationName = 'defenderdevicetagging'
+$packageVersion = '1.0.2'
+$configurationPath = Join-Path $PSScriptRoot 'defenderdevicetagging.ps1'
 $modulePath = Join-Path $PSScriptRoot 'Modules'
 $compiledPath = Join-Path $OutputPath 'compiled'
 $packagePath = Join-Path $OutputPath "$configurationName.zip"
@@ -56,7 +56,7 @@ $env:PSModulePath = "$modulePath$([System.IO.Path]::PathSeparator)$env:PSModuleP
 Import-Module PSDesiredStateConfiguration -RequiredVersion 2.0.7
 Import-Module GuestConfiguration
 . $configurationPath
-devicetagging -OutputPath $compiledPath
+defenderdevicetagging -OutputPath $compiledPath
 
 $compiledMof = Join-Path $compiledPath 'localhost.mof'
 $namedMof = Join-Path $compiledPath "$configurationName.mof"
@@ -90,7 +90,7 @@ $policyParameter = @(
         DisplayName          = 'Microsoft Defender for Endpoint device tag'
         Description          = 'Value written to the Group registry value. The value must contain no more than 200 characters.'
         ResourceType         = 'MdeDeviceTagging'
-        ResourceId           = 'devicetagging'
+        ResourceId           = 'defenderdevicetagging'
         ResourcePropertyName = 'DeviceTag'
         DefaultValue         = 'DefaultDeviceTag'
     }
