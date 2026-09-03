@@ -88,7 +88,23 @@
                                 "enableInventory": false,
                                 "fileSettings": {
                                     "fileCollectionFrequency": 900,
-                                    "fileInfo": null
+                                    "fileInfo": [
+                                        {
+                                            "name": "devicetagging",
+                                            "description": "",
+                                            "destinationPath": "/etc/opt/microsoft/mdatp/managed/mdatp_managed.json",
+                                            "pathType": "File",
+                                            "recurse": false,
+                                            "links": "Follow",
+                                            "uploadContent": false,
+                                            "checksum": "Sha256",
+                                            "maxOutputSize": 5000000,
+                                            "groupTag": "Defender",
+                                            "maxContentsReturnable": 0,
+                                            "useSudo": true,
+                                            "enabled": true
+                                        }
+                                    ]
                                 },
                                 "softwareSettings": {
                                     "softwareCollectionFrequency": 300
